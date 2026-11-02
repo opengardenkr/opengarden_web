@@ -54,7 +54,7 @@ function toItems(raw) {
   return data.items.slice(0, 200).map((it, i) => {
     const rows = (Array.isArray(it.rows) ? it.rows : []).slice(0, 10)
       .filter((r) => Array.isArray(r) && typeof r[0] === 'string' && r[0].trim() && Number(r[2]) > 0)
-      .map((r) => [r[0].slice(0, 20), stockOf(r[1]), Math.round(Number(r[2])), int(r[3]) || 0]);
+      .map((r) => [r[0].slice(0, 20), stockOf(r[1]), Math.round(Number(r[2])), int(r[3]) || 0, Number.isInteger(r[4]) && r[4] > 0 && r[4] <= 100000 ? r[4] : 0]);
     const group = GROUPS.includes(it.group) ? it.group : '';
     const rec = /^rec[A-Za-z0-9]{14}$/.test(it.rec || '') ? it.rec : '';
     return {

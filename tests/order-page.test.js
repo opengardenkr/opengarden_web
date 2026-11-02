@@ -18,7 +18,7 @@ test('order link items are cleaned before rendering', () => {
   assert.equal(out[0].img, '/api/plant-image?group=preorder&id=recAAAAAAAAAAAAAA&index=0&w=520');
   assert.equal(out[1].img, '');            // 알 수 없는 공급처·레코드는 사진 없이
   assert.equal(out[1].step, 10);           // 허용 밖 단위 수량은 기본값
-  assert.deepEqual(out[1].rows, [['P9', null, 4500, 0]]); // 규격 없거나 가격 0인 줄은 버림
+  assert.deepEqual(out[1].rows, [['P9', null, 4500, 0, 0]]); // 규격 없거나 가격 0인 줄은 버림
   assert.throws(() => toItems('{"v":2}'));
 });
 
@@ -52,11 +52,28 @@ test('hand-made links keep proposal photos, features, stock floors and group ord
   assert.equal(items[1].img, '');
   assert.deepEqual(items[0].h, [70, 90]);
   assert.equal(items[0].feat.length, 3);
-  assert.deepEqual(items[1].rows, [['16/18', '9,600+', 1000, 0], ['14/16', null, 900, 0]]);
+  assert.deepEqual(items[1].rows, [['16/18', '9,600+', 1000, 0, 0], ['14/16', null, 900, 0, 0]]);
   assert.deepEqual(toGroups(raw), [['알리움', 'Allium']]);
   const { nav, sections } = renderSections({ groups: toGroups(raw), items });
   assert.match(nav, /data-to="g-allium"/);
   assert.match(nav, /수선화/); // 지정하지 않은 묶음도 빠지지 않는다
   assert.match(sections, /재고 9,600구 이상/);
   assert.match(sections, /키 70~90cm/);
+});
+
+test('crate rows are ordered in crates and sent in bulbs', () => {
+  const items = toItems(JSON.stringify({ v: 1, items: [
+    { k: 'rm', grp: '알리움', name: '레드 모히칸', rows: [['10/12', 2300, 1900, 0, 1000], ['10/12 잔량', 300, 1900, 0, 300]] },
+    { k: 'dm', grp: '수선화', name: '더치마스터', rows: [['16/18', '9,600+', 1000, 0, 160]] },
+    { k: 'st', grp: '알리움', name: '스티피타툼', rows: [['14/+', 200, 400, 0]] },
+  ] }));
+  assert.equal(items[0].rows[0][4], 1000);
+  const { sections } = renderSections({ items });
+  assert.match(sections, /data-price="1900000" data-bp="1900" data-pack="1000" data-max="2" data-step="1" data-unit="크레이트"/);
+  assert.match(sections, /재고 2크레이트</);
+  assert.match(sections, /크레이트당 1,000구 · ₩1,900\/구/);
+  assert.match(sections, /₩1,900,000<small>\/크레이트<\/small>/);
+  assert.match(sections, /재고 60크레이트 이상</);
+  assert.match(sections, /data-pack="" data-max="200" data-step="10" data-unit="구"/);
+  assert.equal(unitOf(items), '');
 });
