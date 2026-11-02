@@ -63,6 +63,9 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 .o-stock{font-size:12.5px;color:var(--gray)}
 .o-price{font-size:17px;font-weight:800;width:100%}
 .o-price small{font-size:12px;font-weight:500;color:var(--gray);margin-left:1px}
+.o-sub{font-size:12px;color:var(--gray);width:100%;margin-top:-2px}
+.opt.crate .o-price{white-space:nowrap}
+.opt.crate .stepper input{width:48px}
 .few{font-style:normal;font-size:11px;font-weight:700;color:var(--warn);border:1px solid #E6A27A;border-radius:4px;padding:0 4px}
 .stepper{display:flex;align-items:center;border:1px solid #C9D1C4;border-radius:12px;overflow:hidden;background:#fff}
 .stepper input{width:76px;height:44px;border:0;text-align:center;font-weight:700;font-size:16px;-moz-appearance:textfield;color:var(--ink)}
@@ -259,8 +262,10 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
   }
   function picked(){
     return opts.filter(function(o){ return qtyOf(o) > 0; }).map(function(o){
-      var q = qtyOf(o), p = +o.dataset.price;
-      return { id:o.dataset.id, grp:o.dataset.grp, name:o.dataset.name, spec:o.dataset.spec, unit:unitOf(o), price:p, qty:q, amt:p*q };
+      var q = qtyOf(o), p = +o.dataset.price, pack = parseInt(o.dataset.pack, 10) || 0;
+      // 크레이트 행: 입력·금액은 크레이트, 접수 수량은 구로 환산
+      var label = pack ? fmt(q) + '크레이트(' + fmt(q * pack) + '구)' : fmt(q) + unitOf(o);
+      return { id:o.dataset.id, grp:o.dataset.grp, name:o.dataset.name, spec:o.dataset.spec, unit:unitOf(o), price:p, bp:+o.dataset.bp || p, pack:pack, label:label, qty:q, bulbs: pack ? q * pack : q, amt:p*q };
     });
   }
   function update(){
@@ -285,7 +290,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
     var sum = $('sum'); sum.innerHTML = '';
     st.list.forEach(function(i){
       var li = document.createElement('li');
-      var a = document.createElement('span'); a.textContent = i.name + ' ' + i.spec + ' × ' + fmt(i.qty) + i.unit;
+      var a = document.createElement('span'); a.textContent = i.name + ' ' + i.spec + ' × ' + i.label;
       var b = document.createElement('span'); b.textContent = '₩' + fmt(i.amt);
       li.appendChild(a); li.appendChild(b); sum.appendChild(li);
     });
@@ -305,7 +310,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 
   function summaryText(no, st){
     return '[오픈가든 ' + CFG.word + ' 요청 ' + no + ']\n' + CFG.title + '\n'
-      + st.list.map(function(i){ return '· ' + i.name + ' ' + i.spec + ' × ' + fmt(i.qty) + i.unit + ' = ₩' + fmt(i.amt); }).join('\n')
+      + st.list.map(function(i){ return '· ' + i.name + ' ' + i.spec + ' × ' + i.label + ' = ₩' + fmt(i.amt); }).join('\n')
       + '\n합계 ₩' + fmt(st.total) + ' (VAT 별도)';
   }
 
@@ -321,7 +326,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
       + ($('fMemo').value.trim() ? '\n고객 메모: ' + $('fMemo').value.trim() : '');
     var body = {
       name: $('fName').value.trim(), phone: phone, memo: memo, agree: true, marketing: false, website: $('fWeb').value,
-      items: st.list.map(function(i){ return { sku: CFG.pid + ':' + i.id, kname: i.grp + ' ' + i.name + ' @₩' + fmt(i.price) + ' = ₩' + fmt(i.amt), size: i.spec, qty: i.qty }; })
+      items: st.list.map(function(i){ return { sku: CFG.pid + ':' + i.id, kname: i.grp + ' ' + i.name + (i.pack ? ' ' + fmt(i.qty) + '크레이트×' + fmt(i.pack) + '구' : '') + ' @₩' + fmt(i.bp) + ' = ₩' + fmt(i.amt), size: i.spec, qty: i.bulbs }; })
     };
     var btn = $('send'); btn.disabled = true; btn.textContent = '보내는 중…'; err.textContent = '';
     fetch('/api/quote', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })

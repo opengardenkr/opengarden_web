@@ -41,15 +41,20 @@ function send(res, status, html) {
 const minLabel = (n) => (n % 10000 === 0 ? (n / 10000).toLocaleString('en-US') + '만원' : '₩' + n.toLocaleString('en-US'));
 const dotDate = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(iso) ? `${iso.slice(0, 4)}. ${+iso.slice(5, 7)}. ${+iso.slice(8, 10)}` : '');
 const int = (v) => (Number.isInteger(v) && v >= 0 ? v : null);
+// 재고: 정수(입력 상한·전량 버튼) 또는 '9,600+' 같은 하한 표시(상한 없음)
+const stockOf = (v) => (typeof v === 'string' && /^\d{1,3}(,\d{3})*\+$/.test(v) ? v : int(v));
+const text = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+// 사진: 카탈로그 레코드(group+rec) 또는 이 사이트의 주문형 제안서 사진(/p/<ID>/img/<키>.jpg)만
+const IMG_RE = /^\/p\/[a-z0-9-]{8,64}\/img\/[a-z0-9]{1,6}\.jpg$/;
 
-/** 품목JSON(ERP가 씀) → 렌더러 spec.items. 모양이 틀린 줄은 버린다. */
+/** 품목JSON(ERP가 씀, 손으로 꾸민 제안 링크는 특징·사진도) → 렌더러 spec.items. 모양이 틀린 줄은 버린다. */
 function toItems(raw) {
   const data = JSON.parse(raw || '{}');
   if (!data || data.v !== 1 || !Array.isArray(data.items)) throw new Error('품목JSON 형식');
   return data.items.slice(0, 200).map((it, i) => {
     const rows = (Array.isArray(it.rows) ? it.rows : []).slice(0, 10)
       .filter((r) => Array.isArray(r) && typeof r[0] === 'string' && r[0].trim() && Number(r[2]) > 0)
-      .map((r) => [r[0].slice(0, 20), int(r[1]), Math.round(Number(r[2])), int(r[3]) || 0]);
+      .map((r) => [r[0].slice(0, 20), stockOf(r[1]), Math.round(Number(r[2])), int(r[3]) || 0, Number.isInteger(r[4]) && r[4] > 0 && r[4] <= 100000 ? r[4] : 0]);
     const group = GROUPS.includes(it.group) ? it.group : '';
     const rec = /^rec[A-Za-z0-9]{14}$/.test(it.rec || '') ? it.rec : '';
     return {
@@ -59,10 +64,23 @@ function toItems(raw) {
       latin: String(it.latin || '').slice(0, 120),
       unit: ['구', '주', '개', '본'].includes(it.unit) ? it.unit : '구',
       step: [1, 5, 10, 50, 100].includes(it.step) ? it.step : 10,
-      img: it.photo && group && rec ? `/api/plant-image?group=${group}&id=${rec}&index=0&w=520` : '',
+      img: typeof it.img === 'string' && IMG_RE.test(it.img) ? it.img : it.photo && group && rec ? `/api/plant-image?group=${group}&id=${rec}&index=0&w=520` : '',
+      size: text(it.size, 12),
+      head: text(it.head, 20),
+      h: Array.isArray(it.h) && it.h.length === 2 && it.h.every((n) => Number.isInteger(n) && n > 0 && n < 1000) ? it.h : null,
+      feat: (Array.isArray(it.feat) ? it.feat : []).map((f) => text(f, 60)).filter(Boolean).slice(0, 3),
+      note: text(it.note, 40),
       rows,
     };
   }).filter((it) => it.name && it.rows.length);
+}
+
+/** 품목JSON의 groups(선택) = [[표시명, 영문]] — 묶음 순서·영문 소제목 */
+function toGroups(raw) {
+  const data = JSON.parse(raw || '{}');
+  return (Array.isArray(data.groups) ? data.groups : []).slice(0, 20)
+    .filter((g) => Array.isArray(g) && typeof g[0] === 'string' && g[0].trim() && /^[A-Za-z]{2,30}$/.test(g[1] || ''))
+    .map((g) => [g[0].trim().slice(0, 30), g[1]]);
 }
 
 module.exports = async (req, res) => {
@@ -93,6 +111,7 @@ module.exports = async (req, res) => {
       title: String(f[F.title] || '오픈가든 주문서').slice(0, 60),
       date: dotDate(iso),
       basis: iso ? `${iso} 재고 기준` : '오픈가든 주문서',
+      groups: toGroups(f[F.items]),
       items,
     };
     const { nav, sections } = renderSections(spec);
@@ -115,3 +134,4 @@ module.exports = async (req, res) => {
 };
 
 module.exports.toItems = toItems;
+module.exports.toGroups = toGroups;
