@@ -40,3 +40,23 @@ test('page fills every placeholder', () => {
   assert.match(html, /<section class="terms" hidden>/);
   assert.match(html, /"word":"주문"/);
 });
+
+test('hand-made links keep proposal photos, features, stock floors and group order', () => {
+  const { toGroups } = require('../api/order-page');
+  const raw = JSON.stringify({ v: 1, groups: [['알리움', 'Allium'], ['bad', '한글']], items: [
+    { k: 'ps', grp: '알리움', name: '퍼플', img: '/p/air-20261028-aff57e25/img/ps.jpg', size: '중형', head: '화구 8~10cm', h: [70, 90], feat: ['a', 'b', 'c', 'd'], rows: [['12/14', 400, 500, 0]] },
+    { k: 'dm', grp: '수선화', name: '더치', img: 'https://evil.example/x.jpg', note: '16/18만 보유', rows: [['16/18', '9,600+', 1000, 0], ['14/16', '9600', 900, 0]] },
+  ] });
+  const items = toItems(raw);
+  assert.equal(items[0].img, '/p/air-20261028-aff57e25/img/ps.jpg');
+  assert.equal(items[1].img, '');
+  assert.deepEqual(items[0].h, [70, 90]);
+  assert.equal(items[0].feat.length, 3);
+  assert.deepEqual(items[1].rows, [['16/18', '9,600+', 1000, 0], ['14/16', null, 900, 0]]);
+  assert.deepEqual(toGroups(raw), [['알리움', 'Allium']]);
+  const { nav, sections } = renderSections({ groups: toGroups(raw), items });
+  assert.match(nav, /data-to="g-allium"/);
+  assert.match(nav, /수선화/); // 지정하지 않은 묶음도 빠지지 않는다
+  assert.match(sections, /재고 9,600구 이상/);
+  assert.match(sections, /키 70~90cm/);
+});
