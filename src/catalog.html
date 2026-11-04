@@ -293,7 +293,7 @@ select{border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;font
   <h1>식물 카탈로그</h1>
   <a class="store-link" href="https://smartstore.naver.com/open-garden-boutique" target="_blank" rel="noopener">노지용 화분 · 스마트스토어 <span aria-hidden="true">↗</span></a>
 </div>
-<div class="wrap" style="margin-bottom:20px"><p>목록에 없는 식물도 문의해주세요. 식물을 담지 않아도 됩니다.</p><button type="button" class="send" style="width:auto;padding:12px 24px" onclick="openModal()">견적 문의</button></div>
+<div class="wrap" style="margin-bottom:20px"><p>목록에 없는 식물도 문의해주세요. 식물을 담지 않아도 됩니다.</p><button type="button" class="send" style="width:auto;padding:12px 24px" onclick="openModal(true)">견적 문의</button></div>
 
 <div class="toolbar">
   <div class="wrap">
@@ -859,12 +859,14 @@ function updateBar(){
   document.getElementById('chatFab').classList.toggle('lifted',n>0);
 }
 
-function openModal(){
+let directInquiry=false;
+function openModal(direct=false){
+  directInquiry=direct;
   document.getElementById('qform').style.display='';
   document.getElementById('qdone').style.display='none';
   document.getElementById('fallback').style.display='none';
   const box=document.getElementById('items');box.innerHTML='';
-  Object.keys(cart).forEach(id=>{
+  (directInquiry?[]:Object.keys(cart)).forEach(id=>{
     const p=PLANTS.find(x=>x.id===id);
     const row=document.createElement('div');row.className='item';
     row.innerHTML=`<div><div class="n">${esc(p.kname)}</div><div class="s">${esc([p.size,p.zone].filter(Boolean).join(' · '))}${p.moq?` · 최소 ${p.moq}개`:''}</div></div>
@@ -879,12 +881,12 @@ function openModal(){
     minus.onclick=()=>{input.value=Math.max(1,+input.value-1);cart[id]=+input.value;saveCart();};
     plus.onclick=()=>{input.value=+input.value+1;cart[id]=+input.value;saveCart();};
     input.onchange=()=>{input.value=Math.max(1,+input.value||1);cart[id]=+input.value;saveCart();};
-    row.querySelector('.rm').onclick=()=>{delete cart[id];saveCart();row.remove();updateBar();if(!Object.keys(cart).length)closeModal();render();};
+    row.querySelector('.rm').onclick=()=>{delete cart[id];saveCart();row.remove();updateBar();render();};
     box.appendChild(row);
   });
   document.getElementById('overlay').classList.add('show');
 }
-if(location.hash==='#quote')openModal();
+if(location.hash==='#quote')openModal(true);
 function closeModal(){document.getElementById('overlay').classList.remove('show')}
 document.getElementById('overlay').onclick=e=>{if(e.target.id==='overlay')closeModal()};
 
@@ -909,7 +911,7 @@ async function sendQuote(){
   }
   if(inquiryType==='personal'){toast('식물 소매 판매는 하지 않습니다');return;}
   const memo=document.getElementById('fmemo').value.trim().slice(0,500);
-  if(!Object.keys(cart).length&&!memo){toast('찾는 식물이나 문의 내용을 적어주세요');document.getElementById('fmemo').focus();return;}
+  if((directInquiry||!Object.keys(cart).length)&&!memo){toast('찾는 식물이나 문의 내용을 적어주세요');document.getElementById('fmemo').focus();return;}
   const inquirySummary=`거래 유형: ${document.getElementById('ftype').selectedOptions[0].textContent}\n예산: ${budget}\n납기: ${timing}\n유입 경로: ${referral||'미선택'}\n${memo}`;
   const agree=document.getElementById('fagree').checked;
   const marketing=document.getElementById('fmkt').checked;
@@ -928,7 +930,7 @@ async function sendQuote(){
     return;
   }
   document.querySelector('.consent').classList.remove('err');
-  const items=Object.keys(cart).map(id=>{
+  const items=(directInquiry?[]:Object.keys(cart)).map(id=>{
     const p=PLANTS.find(x=>x.id===id);
     return {sku:p.id,kname:p.kname,size:p.size,qty:cart[id]};
   });
@@ -948,7 +950,7 @@ async function sendQuote(){
     document.getElementById('doneNo').textContent=lastRequestNo;
     document.getElementById('qform').style.display='none';
     document.getElementById('qdone').style.display='block';
-    cart={};saveCart();updateBar();render();
+    if(!directInquiry){cart={};saveCart();updateBar();render();}
   }catch(e){
     // 접수 서버 연결 실패(오프라인·미배포 등) → 예비 경로: 목록 복사 + 카카오톡으로 직접 요청
     const lines=items.map((it,i)=>`${i+1}. ${it.kname} · ${it.size} · ${it.qty}개`);
