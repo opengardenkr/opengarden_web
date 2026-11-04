@@ -6,6 +6,7 @@
 // 값이 차 있으면 봇이므로 조용히 성공 응답만 하고 기록하지 않습니다.
 
 const crypto = require('crypto');
+const { qualifyInquiry } = require('../lib/inquiry');
 
 const BASE = process.env.AIRTABLE_BASE_ID;
 const QTABLE = process.env.AIRTABLE_QUOTE_TABLE || '견적요청';
@@ -88,6 +89,9 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: '연락처를 확인해주세요.' });
     }
 
+    const qualification = qualifyInquiry(req.body);
+    if (qualification.error) return res.status(400).json({ error: qualification.error });
+
     // 입력값 정리 (길이 제한 + 수량 범위 강제)
     const clean = items.slice(0, 100).map((i) => ({
       sku: String(i.sku || '').slice(0, 50),
@@ -122,7 +126,7 @@ module.exports = async (req, res) => {
                 요청번호: no,
                 요청자: String(name).slice(0, 100),
                 연락처: cleanPhone,
-                요청사항: String(memo).slice(0, 1000),
+                요청사항: qualification.memo,
                 품목요약: summary,
                 품목JSON: JSON.stringify(clean),
                 상태: '신규',
