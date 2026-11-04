@@ -291,9 +291,9 @@ select{border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;font
 <div class="wrap page-head">
   <div class="catalog-kicker">OPEN GARDEN / PLANT COLLECTION</div>
   <h1>식물 카탈로그</h1>
-  <a class="store-link" href="https://smartstore.naver.com/open-garden-boutique" target="_blank" rel="noopener">개인 소량 구매 · 스마트스토어 <span aria-hidden="true">↗</span></a>
+  <a class="store-link" href="https://smartstore.naver.com/open-garden-boutique" target="_blank" rel="noopener">노지용 화분 · 스마트스토어 <span aria-hidden="true">↗</span></a>
 </div>
-<div class="wrap" style="margin-bottom:20px"><p>원하는 식물을 <b>견적에 담기 → 견적 받기</b>로 문의하세요.</p><p>목록에 없는 식물은 <a href="https://pf.kakao.com/_lGfxhX/chat" target="_blank" rel="noopener"><b>카카오톡 문의</b></a>로 알려주세요.</p></div>
+<div class="wrap" style="margin-bottom:20px"><p>목록에 없는 식물도 문의해주세요. 식물을 담지 않아도 됩니다.</p><button type="button" class="send" style="width:auto;padding:12px 24px" onclick="openModal()">견적 문의</button></div>
 
 <div class="toolbar">
   <div class="wrap">
@@ -347,18 +347,18 @@ select{border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;font
     <button class="close" onclick="closeModal()" aria-label="닫기">✕</button>
     <div id="qform">
       <h2>견적 요청</h2>
-      <p class="desc">내용을 남겨주시면 담당자가 연락드립니다. 개인 취미용 초소량 개별 수입은 진행하지 않습니다.</p>
+      <p class="desc">내용을 남겨주시면 담당자가 연락드립니다. 식물 소매 판매와 개인용 소량 수입은 하지 않습니다.</p>
       <div id="items"></div>
 
-      <div class="field"><label for="ftype">거래 유형 (필수)</label><select id="ftype" onchange="updateInquiryType()"><option value="">선택해주세요</option><option value="domestic">국내 재고 도매 구매</option><option value="scheduled">정기 수입·사전 예약</option><option value="sourcing">해외 식물 수입</option><option value="personal">개인 취미용 소량 구매</option></select></div>
-      <p id="personalGuide" hidden>개인 소량 구매는 <a href="https://smartstore.naver.com/open-garden-boutique" target="_blank" rel="noopener">스마트스토어 판매 상품</a>을 확인해주세요. 미판매 품목의 초소량 개별 수입은 진행하지 않습니다.</p>
+      <div class="field"><label for="ftype">거래 유형 (필수)</label><select id="ftype" onchange="updateInquiryType()"><option value="">선택해주세요</option><option value="domestic">국내 재고 도매 구매</option><option value="scheduled">정기 수입·사전 예약</option><option value="sourcing">해외 식물 수입</option><option value="personal">개인용 식물 구매</option></select></div>
+      <p id="personalGuide" hidden>식물 소매 판매와 개인용 소량 수입은 하지 않습니다.</p>
       <div class="field"><label for="fbudget">예산 (필수)</label><input id="fbudget" maxlength="100" placeholder="예: 물품·운송 등을 포함해 500만원"></div>
       <div class="field"><label for="ftiming">받고 싶은 시기 (필수)</label><input id="ftiming" maxlength="100" placeholder="예: 2027년 3월 / 일정 협의 가능"></div>
       <div class="field"><label for="fsource">알게 된 경로 (선택)</label><select id="fsource"><option value="">선택 안 함</option><option>검색</option><option>AI</option><option>유튜브</option><option>소개</option><option>기타</option></select></div>
       <p style="font-size:13px">국내 재고와 정기 수입은 품목·공급처별 주문 단위를 확인합니다. 수입 비용은 품목과 수량을 확인한 뒤 안내합니다.</p>
       <div class="field"><label for="fphone">연락처 (필수) <span class="hint">· 견적 안내에만 사용합니다</span></label><input id="fphone" type="tel" inputmode="tel" placeholder="010-0000-0000"></div>
       <div class="field"><label for="fname">담당자 / 업체명 (필수) <span class="hint">· 농장명 또는 기관명도 가능합니다</span></label><input id="fname" placeholder="예: 홍길동 / ○○조경"></div>
-      <div class="field"><label for="fmemo">요청 사항 (선택) <span class="hint">· 희망 규격·수량·납기를 적어주시면 더 빠릅니다</span></label><textarea id="fmemo" rows="2" placeholder="납품 희망 시기, 현장 위치 등"></textarea></div>
+      <div class="field"><label for="fmemo">찾는 식물 / 문의 내용 <span class="hint">· 담은 식물이 없으면 내용을 적어주세요</span></label><textarea id="fmemo" rows="2" maxlength="500" placeholder="식물 이름, 수량 또는 궁금한 내용을 적어주세요"></textarea></div>
 
       <!-- 개인정보 수집·이용 동의 (필수/선택 분리 — 묶어서 받으면 위법) -->
       <div class="consent">
@@ -884,6 +884,7 @@ function openModal(){
   });
   document.getElementById('overlay').classList.add('show');
 }
+if(location.hash==='#quote')openModal();
 function closeModal(){document.getElementById('overlay').classList.remove('show')}
 document.getElementById('overlay').onclick=e=>{if(e.target.id==='overlay')closeModal()};
 
@@ -906,8 +907,9 @@ async function sendQuote(){
   for(const [id,value,label] of [['ftype',inquiryType,'거래 유형'],['fname',name,'담당자 / 업체명'],['fbudget',budget,'예산'],['ftiming',timing,'받고 싶은 시기']]){
     if(!value){toast(label+'을 입력해주세요');document.getElementById(id).focus();return;}
   }
-  if(inquiryType==='personal'){toast('개인 소량 구매는 스마트스토어를 이용해주세요');return;}
+  if(inquiryType==='personal'){toast('식물 소매 판매는 하지 않습니다');return;}
   const memo=document.getElementById('fmemo').value.trim().slice(0,500);
+  if(!Object.keys(cart).length&&!memo){toast('찾는 식물이나 문의 내용을 적어주세요');document.getElementById('fmemo').focus();return;}
   const inquirySummary=`거래 유형: ${document.getElementById('ftype').selectedOptions[0].textContent}\n예산: ${budget}\n납기: ${timing}\n유입 경로: ${referral||'미선택'}\n${memo}`;
   const agree=document.getElementById('fagree').checked;
   const marketing=document.getElementById('fmkt').checked;
