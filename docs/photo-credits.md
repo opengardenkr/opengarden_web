@@ -20,4 +20,4 @@ Open Garden's own field photographs, supplied by the CEO on 2026-11-04 (farm, lo
 Import photos (`ogf-imp-*`, overseas grower visits, Aug–Dec 2025) supplied by the CEO on 2026-11-04 via Google Drive.
 Cards in 수입·농장·유통·행사 are ordered newest first by shooting date (EXIF); photos without a date go last; photos inside one event card run in shooting order.
 Garden-construction case photos and their years come from the 천안칼라관목 2026 company profile (지명원), supplied by the CEO.
-All images are cropped to 4:3 and resized to 1600×1200 WebP (thumbnails 720×540).
+All images are cropped to 4:3 and resized to 1600×1200 WebP (thumbnails 720×540), with the Open Garden logo watermark (centre, faint + bottom-right) burned in by `tools/gallery-crop/watermark.py`.

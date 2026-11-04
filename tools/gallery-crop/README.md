@@ -17,6 +17,8 @@
    6MB가 넘는 파일은 커넥터가 끊기니 한 번에 한 장씩.
 3. `python3 tools/gallery-crop/apply.py <원본폴더> <out_dir>/crops` — 바뀐 사진만 다시 잘라
    `public/assets/gallery/`(1600×1200)와 `thumb/`(720×540)를 덮어쓰고 `photos.json`을 갱신합니다.
+   워터마크(`watermark.py`: 가운데 옅은 로고 + 오른쪽 아래 로고, 원본 로고 파일 그대로)는 자동으로 들어갑니다.
+   이미 워터마크가 들어간 `public/assets/gallery/` 파일을 다시 원본으로 쓰지 마세요(이중 워터마크).
    HEIC 원본은 `pip install pillow-heif --break-system-packages` 필요.
 4. `npm test` → 브랜치·PR → validate 통과 후 merge → open-garden.co.kr/gallery.html 확인.
 

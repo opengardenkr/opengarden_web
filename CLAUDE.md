@@ -9,7 +9,7 @@
 public/
   index.html      홈 원페이지 (히어로→밴드→지표→소개→서비스→사례→이용안내→FAQ→CTA→푸터)
   gallery.html    갤러리: 조성(정원 콘셉트별 카드)·농장·수입·유통·행사 사진(날짜 최신순, 수입은 재배장·묘목·기타 줄), 카드 클릭 → 크게 보기·넘김
-                  사진은 public/assets/gallery/(1600×1200 WebP) + thumb/(720×540). 카드는 정적 HTML, 넘김 데이터는 페이지 스크립트의 SETS
+                  사진은 public/assets/gallery/(1600×1200 WebP, 워터마크 포함) + thumb/(720×540). 우클릭·끌어가기 저장 막음. 카드는 정적 HTML, 넘김 데이터는 페이지 스크립트의 SETS
                   사진별 자르기 위치 변경: tools/gallery-crop/README.md (대표가 "갤러리 자르기 적용"이라고 하면 이 절차대로)
   catalog.html    카탈로그: 검색/필터 → 담기 → 상세 모달 → 견적 접수(연락처) → 접수완료 화면
                   품종 링크 공유: /catalog.html?item=<SKU 또는 레코드ID> 로 해당 품종 상세가 바로 열림

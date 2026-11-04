@@ -6,10 +6,13 @@ python3 tools/gallery-crop/apply.py <원본폴더> [<자르기값폴더>] [--all
 - 원본폴더: 드라이브 원본을 '<drive id>.<확장자>'로 저장한 폴더 (HEIC는 pillow-heif 필요)
 - 자르기값폴더: 자르기 도구 DB(crops 컬렉션)를 JSON으로 내려받은 폴더(<id>.json, {x,y,w})
   주면 photos.json의 crop 값을 갱신하고, 값이 바뀐 사진만 다시 자른다. --all 이면 원본이 있는 사진 전부.
-- 결과: public/assets/gallery/<file> (1600×1200 WebP) + thumb/<file> (720×540)
+- 결과: public/assets/gallery/<file> (1600×1200 WebP, 워터마크) + thumb/<file> (720×540)
 """
 import glob, json, os, sys
 from PIL import Image, ImageOps
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from watermark import watermark  # noqa: E402
 
 try:
     import pillow_heif
@@ -60,7 +63,7 @@ for p in photos:
     x = min(max(0, p["crop"]["x"] * bw), bw - w)
     y = min(max(0, p["crop"]["y"] * bh), bh - h)
     c = base.crop((round(x), round(y), round(x + w), round(y + h)))
-    full = c.resize((1600, 1200), Image.LANCZOS)
+    full = watermark(c.resize((1600, 1200), Image.LANCZOS))
     full.save(os.path.join(OUT, p["file"]), "WEBP", quality=82, method=6)
     full.resize((720, 540), Image.LANCZOS).save(os.path.join(OUT, "thumb", p["file"]), "WEBP", quality=72, method=6)
     done.append(p["id"])
