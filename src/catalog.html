@@ -272,6 +272,10 @@ select{border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;font
   transition:opacity .5s ease var(--rd,0ms),transform .55s cubic-bezier(.22,.61,.36,1) var(--rd,0ms)}
 [data-reveal].in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){[data-reveal],[data-reveal].in{opacity:1;transform:none;transition:none}}
+
+.field select{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:inherit}
+#personalGuide{padding:14px;background:var(--mint);line-height:1.7}
+.send:disabled{opacity:.5;cursor:not-allowed}
 </style>
 <link rel="stylesheet" href="/assets/site.css">
 <link rel="stylesheet" href="/assets/catalog.css">
@@ -287,7 +291,7 @@ select{border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;font
 <div class="wrap page-head">
   <div class="catalog-kicker">OPEN GARDEN / PLANT COLLECTION</div>
   <h1>식물 카탈로그</h1>
-  <p>원하는 품종과 수량을 담고 연락처를 남겨주세요. 접수 후 오픈가든이 견적을 안내합니다.</p>
+  <p>사업용 품종과 수량을 담고 거래 조건을 확인해주세요. 개인 소량 구매는 <a href="https://smartstore.naver.com/open-garden-boutique" target="_blank" rel="noopener">스마트스토어 판매 상품</a>을 이용해주세요.</p>
 </div>
 
 <div class="toolbar">
@@ -343,10 +347,18 @@ select{border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;font
     <button class="close" onclick="closeModal()" aria-label="닫기">✕</button>
     <div id="qform">
       <h2>견적 요청</h2>
-      <p class="desc">연락처만 남기시면 접수됩니다. 담당자가 재고·시즌을 확인해 견적으로 연락드립니다.</p>
+      <p class="desc">사업용 거래 조건 확인 후 담당자가 회신합니다. 개인 취미용 초소량 개별 수입은 진행하지 않습니다.</p>
       <div id="items"></div>
+
+      <div class="field"><label for="ftype">거래 유형 (필수)</label><select id="ftype" onchange="updateInquiryType()"><option value="">선택해주세요</option><option value="domestic">국내 재고 도매 구매</option><option value="scheduled">정기 수입·사전 예약</option><option value="sourcing">별도 해외 소싱·수입</option><option value="personal">개인 취미용 소량 구매</option></select></div>
+      <p id="personalGuide" hidden>개인 소량 구매는 <a href="https://smartstore.naver.com/open-garden-boutique" target="_blank" rel="noopener">스마트스토어 판매 상품</a>을 확인해주세요. 미판매 품목의 초소량 개별 수입은 진행하지 않습니다.</p>
+      <div class="field"><label for="fbudget">예상 총예산 (필수)</label><input id="fbudget" maxlength="100" placeholder="예: 물품·운송 등을 포함해 500만원"></div>
+      <div class="field"><label for="ftiming">희망 납기 (필수)</label><input id="ftiming" maxlength="100" placeholder="예: 2027년 3월 / 일정 협의 가능"></div>
+      <div class="field"><label for="fsource">알게 된 경로 (선택)</label><select id="fsource"><option value="">선택 안 함</option><option>검색</option><option>AI</option><option>유튜브</option><option>소개</option><option>기타</option></select></div>
+      <p style="font-size:13px">국내 재고와 정기 수입은 품목·공급처별 주문 단위를 확인합니다. 별도 해외 소싱·수입은 최소 업무 수수료가 적용되며 물품대금·운송비·검역 및 통관 관련 비용은 별도입니다. 금액은 업무 범위 확인 후 안내합니다.</p>
+      <label style="display:block;margin:14px 0;font-size:14px"><input id="fterms" type="checkbox"> (필수) 사업용 거래 및 위 비용 조건을 확인했습니다. 견적 확정 전 결제 의무는 없습니다.</label>
       <div class="field"><label for="fphone">연락처 (필수) <span class="hint">· 견적 안내에만 사용합니다</span></label><input id="fphone" type="tel" inputmode="tel" placeholder="010-0000-0000"></div>
-      <div class="field"><label for="fname">성함 / 소속 (선택) <span class="hint">· 기업 담당자시면 소속을 남겨주세요</span></label><input id="fname" placeholder="예: 홍길동 / ○○조경"></div>
+      <div class="field"><label for="fname">담당자 / 업체명 (필수) <span class="hint">· 농장명 또는 기관명도 가능합니다</span></label><input id="fname" placeholder="예: 홍길동 / ○○조경"></div>
       <div class="field"><label for="fmemo">요청 사항 (선택) <span class="hint">· 희망 규격·수량·납기를 적어주시면 더 빠릅니다</span></label><textarea id="fmemo" rows="2" placeholder="납품 희망 시기, 현장 위치 등"></textarea></div>
 
       <!-- 개인정보 수집·이용 동의 (필수/선택 분리 — 묶어서 받으면 위법) -->
@@ -354,7 +366,7 @@ select{border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;font
         <label class="agree"><input type="checkbox" id="fagree">
           <span><b>(필수)</b> 개인정보 수집·이용에 동의합니다.</span></label>
         <div class="agree-detail">
-          연락처·성함/소속·요청 사항·품목을 견적 및 납품 진행 목적으로 3년간 보관합니다.
+          연락처·담당자/업체명·거래 유형·예산·납기·요청 사항·품목 및 선택한 유입 경로를 견적 및 납품 진행 목적으로 3년간 보관합니다.
           거부하실 수 있으며 이 경우 접수가 제한됩니다.
           <a href="/privacy.html" target="_blank" rel="noopener">자세히 보기</a>
         </div>
@@ -881,10 +893,26 @@ document.getElementById('overlay').onclick=e=>{if(e.target.id==='overlay')closeM
 // 카톡은 "급한 고객용" 보조 통로 — 접수 완료 화면의 버튼으로 요청번호만 들고 이동.
 let lastRequestNo='';
 
+function updateInquiryType(){
+  const personal=document.getElementById('ftype').value==='personal';
+  document.getElementById('personalGuide').hidden=!personal;
+  document.querySelector('#qform > .send').disabled=personal;
+}
 async function sendQuote(){
   const name=document.getElementById('fname').value.trim();
   const phone=document.getElementById('fphone').value.trim();
-  const memo=document.getElementById('fmemo').value.trim();
+  const inquiryType=document.getElementById('ftype').value;
+  const budget=document.getElementById('fbudget').value.trim();
+  const timing=document.getElementById('ftiming').value.trim();
+  const referral=document.getElementById('fsource').value;
+  const termsAccepted=document.getElementById('fterms').checked;
+  for(const [id,value,label] of [['ftype',inquiryType,'거래 유형'],['fname',name,'담당자 / 업체명'],['fbudget',budget,'예상 총예산'],['ftiming',timing,'희망 납기']]){
+    if(!value){toast(label+'을 입력해주세요');document.getElementById(id).focus();return;}
+  }
+  if(inquiryType==='personal'){toast('개인 소량 구매는 스마트스토어를 이용해주세요');return;}
+  if(!termsAccepted){toast('사업용 거래 및 비용 조건을 확인해주세요');document.getElementById('fterms').focus();return;}
+  const memo=document.getElementById('fmemo').value.trim().slice(0,500);
+  const inquirySummary=`거래 유형: ${document.getElementById('ftype').selectedOptions[0].textContent}\n예산: ${budget}\n납기: ${timing}\n유입 경로: ${referral||'미선택'}\n사업용 거래·비용 조건 확인: 예\n${memo}`;
   const agree=document.getElementById('fagree').checked;
   const marketing=document.getElementById('fmkt').checked;
   if(phone.replace(/\D/g,'').length<9){
@@ -912,8 +940,9 @@ async function sendQuote(){
     const r=await fetch('/api/quote',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name,phone,memo,items,agree,marketing,website:''})
+      body:JSON.stringify({name,phone,memo,items,agree,marketing,inquiryType,budget,timing,referral,termsAccepted,website:''})
     });
+    if(r.status===400){const error=await r.json();toast(error.error||'입력 내용을 확인해주세요');return;}
     if(!r.ok) throw new Error('quote-failed');
     const d=await r.json();
     // ② 접수 완료 화면 — 고객은 여기서 끝
@@ -930,7 +959,7 @@ async function sendQuote(){
       name?`요청자: ${name}`:null,
       phone?`연락처: ${phone}`:null,
       ``, ...lines,
-      memo?`\n요청사항: ${memo}`:null
+      `\n요청사항: ${inquirySummary}`
     ].filter(x=>x!==null).join('\n');
     document.getElementById('fallback').style.display='block';
     document.getElementById('fallbackText').value=msg;
