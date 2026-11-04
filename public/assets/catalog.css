@@ -3,6 +3,11 @@
 .catalog-page .page-head h1{font-size:clamp(30px,4vw,46px)}
 .catalog-page .page-head p{max-width:42em;font-size:15px}
 .catalog-kicker{font-size:11px;letter-spacing:.18em;color:var(--green);font-weight:700;margin-bottom:12px}
+.catalog-page .page-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;column-gap:20px}
+.catalog-page .page-head .catalog-kicker{grid-column:1/-1}
+.store-link{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--green);font-size:13.5px;font-weight:700;text-decoration:none;white-space:nowrap;margin-bottom:6px}
+.store-link:hover{border-color:var(--green)}
+@media(max-width:640px){.catalog-page .page-head{grid-template-columns:minmax(0,1fr)}.store-link{justify-self:start;margin-top:14px;margin-bottom:0}}
 .catalog-page .toolbar{position:relative;top:auto;padding:0;border-bottom:0}
 .catalog-searchline{display:flex;align-items:stretch;gap:12px}
 .catalog-page .search{border:1px solid var(--line);border-radius:4px;min-width:0;padding:14px 18px;background:var(--bg-soft)}

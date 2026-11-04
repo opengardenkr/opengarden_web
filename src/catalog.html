@@ -291,7 +291,7 @@ select{border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;font
 <div class="wrap page-head">
   <div class="catalog-kicker">OPEN GARDEN / PLANT COLLECTION</div>
   <h1>식물 카탈로그</h1>
-  <p>사업용 품종과 수량을 담고 거래 조건을 확인해주세요. 개인 소량 구매는 <a href="https://smartstore.naver.com/open-garden-boutique" target="_blank" rel="noopener">스마트스토어 판매 상품</a>을 이용해주세요.</p>
+  <a class="store-link" href="https://smartstore.naver.com/open-garden-boutique" target="_blank" rel="noopener">개인 소량 구매 · 스마트스토어 <span aria-hidden="true">↗</span></a>
 </div>
 
 <div class="toolbar">
@@ -304,7 +304,6 @@ select{border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;font
       <button type="button" data-supply="" aria-pressed="true">전체 공급</button>
       <button type="button" data-supply="즉시 출하" aria-pressed="false">즉시 출하</button>
       <button type="button" data-supply="수입·사전예약" aria-pressed="false">수입·사전예약</button>
-       <label class="filter-field"><span>공급처</span><select id="supplier" aria-label="공급처 필터"><option value="">모든 공급처</option><option value="국내 농장">국내 농장</option><option value="호게나르드">호게나르드</option><option value="HBM">HBM</option></select></label>
     </div>
       <select id="status" aria-label="공급 구분" hidden>
         <option value="">공급 구분 전체</option>
@@ -501,17 +500,16 @@ const clean=CatalogInfo.text;
 
 function resetFilters(){
   cat='전체';sub='전체';
-  ['q','zone','status','supplier'].forEach(id=>document.getElementById(id).value='');
+  ['q','zone','status'].forEach(id=>document.getElementById(id).value='');
   renderCats();renderSubs();render();
 }
 function renderFilterState(){
-  const z=document.getElementById('zone').value,s=document.getElementById('status').value, supplier=document.getElementById('supplier').value;
+  const z=document.getElementById('zone').value,s=document.getElementById('status').value;
   const q=document.getElementById('q').value.trim();
   document.querySelectorAll('[data-supply]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.supply===s)));
   const active=[];
   if(q)active.push(['q','검색: '+q]);
   if(s)active.push(['status',s]);
-   if(supplier)active.push(['supplier','공급처: '+supplier]);
   if(cat!=='전체')active.push(['cat',cat]);
   if(sub!=='전체')active.push(['sub',document.getElementById('sub').selectedOptions[0]?.textContent||sub]);
   if(z)active.push(['zone','내한성: '+z]);
@@ -564,7 +562,6 @@ function renderSubs(){
   row.hidden=false;
 }
 document.getElementById('sub').onchange=e=>{sub=e.target.value;render();};
- document.getElementById('supplier').onchange=render;
 
 // ── 품종 묶기 ──
 // 에어테이블은 규격마다 별도 레코드입니다(SKU·단가가 규격별로 달라 구조상 옳음).
@@ -648,17 +645,17 @@ renderSkeleton(8);
 
 function filtered(){
   const q=document.getElementById('q').value.trim().toLowerCase();
-  const z=document.getElementById('zone').value, s=document.getElementById('status').value, supplier=document.getElementById('supplier').value;
-  // 공급처·상태·내한성 조건은 SKU에 적용합니다
+  const z=document.getElementById('zone').value, s=document.getElementById('status').value;
+  // 상태·내한성 조건은 SKU에 적용합니다
   return ITEMS.filter(p=>
     (cat==="전체"||groupOf(p)===cat)&&(sub==="전체"||subOf(p)===sub)&&
-    p.variants.some(v=>(!supplier||v.source===supplier)&&CatalogInfo.matchesVariant(v,z,s))&&
+    p.variants.some(v=>CatalogInfo.matchesVariant(v,z,s))&&
     (!q||CatalogTools.matches(p.searchText,q)));
 }
 
 function render(){
    const list=filtered(), grid=document.getElementById('grid');
-   const signature=[document.getElementById('q').value,document.getElementById('zone').value,document.getElementById('status').value,document.getElementById('supplier').value,cat,sub].join('|');
+   const signature=[document.getElementById('q').value,document.getElementById('zone').value,document.getElementById('status').value,cat,sub].join('|');
    if(signature!==previousSignature){visibleLimit=36;previousSignature=signature;}
   renderFilterState();
   document.getElementById('count').textContent=`${list.length}개 품종 표시 중`;
@@ -678,7 +675,7 @@ function render(){
         <h2 class="kname"><button type="button" class="plant-name">${esc(p.kname)}</button></h2>
         ${clean(p.sname)?`<div class="sname">${esc(p.sname)}</div>`:''}
         ${p.variants[0].page?`<a href="${esc(p.variants[0].page)}">품종 정보 ↗</a>`:''}
-        <div class="meta">${[...p.sources,sizeTag,p.cat,moq?`최소 ${moq}개`:''].map(clean).filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+        <div class="meta">${[sizeTag,p.cat,moq?`최소 ${moq}개`:''].map(clean).filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
         <button class="add${n?' added':''}" data-key="${esc(p.key)}">${label}</button>
       </div>`;
     el.querySelector('img')?.addEventListener('error',e=>{e.target.hidden=true;const note=document.createElement('span');note.textContent='사진을 불러오지 못했습니다';e.target.parentElement.append(note);},{once:true});
@@ -781,10 +778,11 @@ function renderDetail(){
     <section class="detail-section"><h3>공급 규격</h3>
     <div class="dsizes" role="group" aria-label="규격 선택">
       <span class="dsz-lbl">규격</span>
-      <div class="dsz-list">${it.variants.map((v,i)=>
-        `<button class="dsz${i===dVar?' on':''}" data-i="${i}" aria-pressed="${i===dVar}">${esc(v.status)} · ${esc(v.source)} · ${esc(sizeText(v.size))}${cart[v.id]?' ✓':''}</button>`).join('')}</div>
+      <div class="dsz-list">${(()=>{const base=it.variants.map(v=>[v.status,sizeText(v.size)].filter(Boolean).join(' · ')),seen={};
+        return it.variants.map((v,i)=>{const n=base.filter(b=>b===base[i]).length>1?(seen[base[i]]=(seen[base[i]]||0)+1):0;
+        return `<button class="dsz${i===dVar?' on':''}" data-i="${i}" aria-pressed="${i===dVar}">${esc(base[i])}${n?' · 옵션 '+n:''}${cart[v.id]?' ✓':''}</button>`;}).join('');})()}</div>
     </div>
-    <p class="order-meta">${[clean(p.source),clean(p.status),p.moq?`최소 주문 ${p.moq}개`:''].filter(Boolean).map(esc).join(' · ')}</p>
+    <p class="order-meta">${[clean(p.status),p.moq?`최소 주문 ${p.moq}개`:''].filter(Boolean).map(esc).join(' · ')}</p>
     <button class="dadd${cart[p.id]?' added':''}" id="dAdd">${cart[p.id]?'✓ 견적 목록에 담김':'견적에 담기'}</button>
     <button class="dshare" id="dShare">이 품종 링크 복사 ↗</button>
     </section></div></div>`;
@@ -1085,7 +1083,7 @@ addEventListener('scroll',()=>hd.classList.toggle('scrolled',scrollY>8),{passive
   }
   if(failed.length){
     const note=document.getElementById('sampleNote');
-    note.hidden=false;note.textContent='일부 공급처를 불러오지 못했습니다. 표시된 품종은 이용할 수 있으며, 새로고침하면 다시 연결합니다.';
+    note.hidden=false;note.textContent='일부 품종을 불러오지 못했습니다. 표시된 품종은 이용할 수 있으며, 새로고침하면 다시 연결합니다.';
   }
   const want=new URLSearchParams(location.search).get('item');
   if(want){
