@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>현장 갤러리 | 오픈가든</title>
+<meta name="description" content="오픈가든이 조성한 정원과 농장, 출하·납품, 박람회 현장을 사진으로 소개합니다.">
+<link rel="canonical" href="https://open-garden.co.kr/gallery.html">
+<meta property="og:url" content="https://open-garden.co.kr/gallery.html">
+<meta property="og:site_name" content="오픈가든">
+<meta property="og:type" content="website">
+<meta property="og:title" content="현장 갤러리 | 오픈가든">
+<meta property="og:description" content="조성 사례부터 농장, 출하, 행사까지 오픈가든의 현장 사진.">
+<meta property="og:image" content="https://open-garden.co.kr/assets/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/logo_green_notext.png" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Noto+Serif+KR:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* 헤드라인 전용 부리체 — 마루 부리(네이버, 무료) */
+
+:root{--green:#1F4D33;--green-dark:#123023;--ink:#111814;--gray:#6b746e;--bg:#fff;--bg-soft:#F4F6F3;--line:#E4E8E3;--kakao:#FEE500}
+/* 한글 모바일 기본값 — 어절 단위 줄바꿈 + 긴 영문은 예외적으로 끊기 */
+body{word-break:keep-all;overflow-wrap:break-word}
+html{-webkit-text-size-adjust:100%}
+/* 제목 줄바꿈은 브라우저가 균형 배분 — 폭마다 <br>가 어긋나던 문제 해결
+   (ch는 숫자 0 기준이라 한글에 부정확 → em 사용) */
+h1,h2,h3{max-width:18em;text-wrap:balance}
+.hero h1{max-width:14em}
+p,li,dd{text-wrap:pretty}
+/* 가운데 정렬 문맥에서는 최대폭이 좌측으로 쏠리지 않게 */
+.hero h1,.center h1,.center h2,h1.center,h2.center,.page-head h1,.page-head h2,.band h2,.process-head h2,.endcta h2,.mapsec h2,.final h2,.faq-cta h2{margin-inline:auto}
+/* PC에서만 살리는 줄바꿈 (모바일에선 자연스럽게 흐르게) */
+@media(max-width:767px){.pc-br{display:none}}
+/* iOS Safari가 입력창 탭 시 확대하지 않도록 — 16px 미만 금지 */
+@media(max-width:767px){input,textarea,select{font-size:16px}}
+
+/* 헤드라인만 부리체 — 본문은 Noto Sans KR 유지 */
+h1,h2{font-family:"Noto Serif KR","Noto Sans KR",serif;letter-spacing:-.02em}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--bg);line-height:1.6;font-size:16px;letter-spacing:-.01em}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+button{font-family:inherit;cursor:pointer}
+
+header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);transition:box-shadow .25s ease}
+header.scrolled{box-shadow:0 6px 24px rgba(20,40,28,.08)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:70px;max-width:1080px;margin:0 auto;padding:0 20px}
+.logo{display:inline-flex;align-items:center;text-decoration:none}
+.logo img{height:58px;width:auto;display:block}
+@media(max-width:640px){.logo img{height:48px}}
+.nav a.link{font-size:14.5px;font-weight:500;color:var(--ink);text-decoration:none;margin-left:22px}
+.nav a.link:hover{color:var(--green)}
+.nav a.link.on{color:var(--green);font-weight:700}
+.nav a.btn-nav{background:var(--green);color:#fff;font-weight:700;padding:9px 20px;border-radius:999px;box-shadow:0 2px 8px rgba(18,48,35,.15);transition:.2s}
+.nav a.btn-nav:hover{color:#fff;background:var(--green-dark);transform:translateY(-1px)}
+@media(max-width:700px){.nav a.link:not(.keep){display:none}}
+
+/* 모바일 햄버거 메뉴 */
+.hamburger{display:none;width:44px;height:44px;border:0;background:none;align-items:center;justify-content:center;margin-left:10px;padding:0}
+.hamburger svg{width:24px;height:24px;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round}
+@media(max-width:700px){.hamburger{display:inline-flex}}
+.nav-overlay{position:fixed;inset:0;background:rgba(10,20,14,.45);z-index:80;opacity:0;transition:opacity .25s ease}
+.nav-overlay.show{opacity:1}
+.mobile-nav{position:fixed;top:0;right:0;bottom:0;width:min(82vw,320px);background:#fff;z-index:81;
+  padding:20px 22px calc(24px + env(safe-area-inset-bottom));transform:translateX(100%);
+  transition:transform .28s cubic-bezier(.22,.61,.36,1);display:flex;flex-direction:column;overflow-y:auto;
+  box-shadow:-8px 0 30px rgba(10,25,16,.18)}
+.mobile-nav.show{transform:none}
+.mnav-close{align-self:flex-end;width:44px;height:44px;border:0;background:none;padding:0;margin-bottom:6px}
+.mnav-close svg{width:22px;height:22px;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round}
+.mobile-nav a.mitem{display:flex;align-items:center;min-height:52px;font-size:17px;font-weight:700;
+  color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+.mobile-nav a.mitem:active{color:var(--green)}
+.mnav-contact{margin-top:auto;padding-top:20px}
+.mnav-contact a{display:flex;align-items:center;gap:9px;min-height:48px;font-size:14.5px;font-weight:600;
+  color:var(--gray);text-decoration:none;word-break:break-all}
+.mnav-contact svg{width:18px;height:18px;flex:0 0 auto;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.mnav-contact a:last-child svg{stroke:none;fill:currentColor}
+@media(prefers-reduced-motion:reduce){.mobile-nav,.nav-overlay{transition:none}}
+
+
+
+.page-head{padding-top:56px;padding-bottom:0;text-align:center}
+.page-head h1{font-size:clamp(28px,4.5vw,42px);font-weight:800;letter-spacing:-.03em}
+
+main{padding:28px 0 100px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:0 0 8px}
+.tab{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:9px 20px;font-size:14px;font-weight:600;color:var(--ink);text-decoration:none;transition:.15s}
+.tab:hover{border-color:var(--green);color:var(--green)}
+.tab.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
+@media(max-width:640px){.tabs{overflow-x:auto;flex-wrap:nowrap;justify-content:flex-start;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{flex:0 0 auto}}
+
+.gsec{padding:56px 0 8px;scroll-margin-top:90px}
+.gsec h2{font-size:clamp(24px,3vw,30px);margin:0 0 22px;max-width:none}
+.ggrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px 20px;align-items:start}
+@media(max-width:860px){.ggrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.ggrid{grid-template-columns:minmax(0,1fr)}}
+.gcard{display:flex;flex-direction:column;gap:4px;min-width:0;padding:0;border:0;background:none;text-align:left;font:inherit;color:inherit;cursor:zoom-in}
+.gimg{position:relative;display:block;width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:var(--radius-media,4px);background:var(--bg-soft);margin-bottom:8px}
+.gimg img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.gcard:hover .gimg img{transform:scale(1.03)}
+.gcard:focus-visible{outline:2px solid var(--green);outline-offset:4px}
+.gcount{position:absolute;right:10px;bottom:10px;padding:3px 10px;border-radius:999px;background:rgba(17,24,20,.72);color:#fff;font-size:12.5px;font-weight:700}
+.gtitle{font-size:18px;font-weight:700;line-height:1.4}
+.gtitle.plain{font-size:16px;font-weight:500}
+.gmeta{font-size:13.5px;color:var(--gray)}
+@media(prefers-reduced-motion:reduce){.gimg img{transition:none}}
+
+.faq-cta{text-align:center;margin-top:72px;padding:34px 24px;background:var(--bg-soft)}
+.faq-cta h2{font-size:19px;font-weight:800;font-family:'Noto Sans KR',sans-serif;letter-spacing:inherit}
+.faq-cta p{color:var(--gray);font-size:14.5px;margin-top:6px}
+.faq-cta a{display:inline-block;margin-top:16px;background:var(--kakao);color:#191919;text-decoration:none;font-weight:800;font-size:15px;padding:13px 28px;border-radius:999px}
+
+.glb{position:fixed;inset:0;z-index:120;background:rgba(10,16,12,.94);color:#fff;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"prev fig next";align-items:center;gap:16px;
+  padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.glb[hidden]{display:none}
+.glb figure{grid-area:fig;margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
+.glb img{display:block;max-width:100%;max-height:calc(100vh - 190px);width:auto;height:auto;border-radius:4px}
+.glb figcaption{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.glb .lt{font-family:"Noto Serif KR","Noto Sans KR",serif;font-size:19px;font-weight:700}
+.glb .le{font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;opacity:.7;margin-left:6px}
+.glb .ld{font-size:14.5px;max-width:34em;opacity:.92}
+.glb .lm{font-size:13px;opacity:.72}
+.glb .nav-b{width:52px;height:52px;border-radius:999px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.08);color:#fff;font-size:26px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s}
+.glb .nav-b:hover:not(:disabled){background:var(--green);border-color:var(--green)}
+.glb .nav-b:disabled{opacity:.25;cursor:default}
+.glb .nav-b[hidden]{display:none}
+.glb .prev{grid-area:prev}.glb .next{grid-area:next}
+.glb .close{position:absolute;top:calc(env(safe-area-inset-top) + 14px);right:calc(env(safe-area-inset-right) + 14px);border:1px solid rgba(255,255,255,.7);background:none;color:#fff;border-radius:999px;padding:6px 16px;font-size:14px;font-weight:500;cursor:pointer}
+@media(max-width:640px){.glb{grid-template-columns:1fr 1fr;grid-template-areas:"fig fig" "prev next";align-content:center;row-gap:20px}.glb .prev{justify-self:end;margin-right:12px}.glb .next{justify-self:start;margin-left:12px}}
+
+/* 푸터 사업자 정보 — 모바일에선 세로 스택(구분자 숨김) */
+footer .biz{display:flex;flex-wrap:wrap;gap:0}
+footer .biz .sep{color:var(--line)}
+@media(max-width:767px){footer .biz{flex-direction:column;gap:4px}footer .biz .sep{display:none}}
+footer{padding:48px 0;font-size:13px;color:var(--gray)}
+footer .wrap{max-width:1080px}
+footer .foot-logo{height:42px;margin-bottom:14px;display:block}
+footer a{color:var(--gray);text-decoration:none;font-weight:700}
+
+.chat-fab{position:fixed;right:18px;bottom:20px;z-index:65;display:flex;align-items:center;gap:8px;background:var(--kakao);color:#191919;text-decoration:none;font-weight:800;font-size:14.5px;padding:13px 18px 13px 15px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.22);transition:.2s}
+.chat-fab:hover{transform:translateY(-2px)}
+.chat-fab svg{width:22px;height:22px}
+@media(max-width:640px){.chat-fab{padding:14px;bottom:calc(16px + env(safe-area-inset-bottom))}.chat-fab .lbl{display:none}}
+
+/* ── 스크롤 등장 ──────────────────────────────────────────────────────
+   화면에 들어온 항목부터 하나씩 나타납니다. 스크롤을 가로채지 않으므로
+   모바일 주소창이 접혔다 펴져도, 카톡 인앱 브라우저에서도 어긋나지 않습니다.
+   data-reveal은 JS가 붙입니다 — JS가 없거나 실패하면 처음부터 전부 보입니다.
+   transform·opacity만 바꿔 레이아웃 계산 없이 그려집니다. */
+[data-reveal]{opacity:0;transform:translate3d(0,16px,0);
+  transition:opacity .5s ease var(--rd,0ms),transform .55s cubic-bezier(.22,.61,.36,1) var(--rd,0ms)}
+[data-reveal].in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){[data-reveal],[data-reveal].in{opacity:1;transform:none;transition:none}}
+
+</style>
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+
+<!-- @include header active=gallery -->
+<div class="wrap breadcrumb" aria-label="현재 위치"><a href="/">홈</a><span aria-hidden="true">/</span><span>현장 갤러리</span></div>
+
+<div class="wrap page-head">
+  <h1>현장 갤러리</h1>
+</div>
+
+<main class="wrap">
+  <nav class="tabs" aria-label="갤러리 구분">
+    <a class="tab" href="#construction">조성</a>
+    <a class="tab" href="#farm">농장</a>
+    <a class="tab" href="#distribution">유통</a>
+    <a class="tab" href="#events">행사</a>
+  </nav>
+  <section class="gsec" id="construction" aria-labelledby="h-construction">
+    <h2 id="h-construction">조성</h2>
+    <div class="ggrid">
+      <button class="gcard" type="button" data-set="construction-0" data-i="0" aria-label="오브제 정원 사진 5장 보기"><span class="gimg"><img src="/assets/gallery/thumb/ogf-con-14.webp" alt="오브제 정원" loading="lazy" decoding="async" width="720" height="540"><span class="gcount">5장</span></span><span class="gtitle">오브제 정원</span><span class="gmeta">국립정원소재센터 · 2026.09</span></button>
+      <button class="gcard" type="button" data-set="construction-1" data-i="0" aria-label="여백의 그라스 정원 사진 2장 보기"><span class="gimg"><img src="/assets/gallery/thumb/ogf-con-05.webp" alt="여백의 그라스 정원" loading="lazy" decoding="async" width="720" height="540"><span class="gcount">2장</span></span><span class="gtitle">여백의 그라스 정원</span><span class="gmeta">광명 · 2025</span></button>
+      <button class="gcard" type="button" data-set="construction-2" data-i="0" aria-label="자연주의 정원 사진 3장 보기"><span class="gimg"><img src="/assets/gallery/thumb/ogf-con-09.webp" alt="자연주의 정원" loading="lazy" decoding="async" width="720" height="540"><span class="gcount">3장</span></span><span class="gtitle">자연주의 정원</span><span class="gmeta">음성 · 2025</span></button>
+      <button class="gcard" type="button" data-set="construction-3" data-i="0" aria-label="카페 정원 사진 2장 보기"><span class="gimg"><img src="/assets/gallery/thumb/ogf-con-12.webp" alt="카페 정원" loading="lazy" decoding="async" width="720" height="540"><span class="gcount">2장</span></span><span class="gtitle">카페 정원</span><span class="gmeta">2025.09</span></button>
+      <button class="gcard" type="button" data-set="construction-4" data-i="0" aria-label="그늘 정원 사진 2장 보기"><span class="gimg"><img src="/assets/gallery/thumb/ogf-con-07.webp" alt="그늘 정원" loading="lazy" decoding="async" width="720" height="540"><span class="gcount">2장</span></span><span class="gtitle">그늘 정원</span><span class="gmeta">안양 · 2024</span></button>
+      <button class="gcard" type="button" data-set="construction-5" data-i="0" aria-label="물길 정원 사진 2장 보기"><span class="gimg"><img src="/assets/gallery/thumb/ogf-con-01.webp" alt="물길 정원" loading="lazy" decoding="async" width="720" height="540"><span class="gcount">2장</span></span><span class="gtitle">물길 정원</span><span class="gmeta">반포 · 2023</span></button>
+      <button class="gcard" type="button" data-set="construction-6" data-i="0" aria-label="바위 정원 사진 2장 보기"><span class="gimg"><img src="/assets/gallery/thumb/ogf-con-03.webp" alt="바위 정원" loading="lazy" decoding="async" width="720" height="540"><span class="gcount">2장</span></span><span class="gtitle">바위 정원</span><span class="gmeta">대전 · 2021</span></button>
+    </div>
+  </section>
+  <section class="gsec" id="farm" aria-labelledby="h-farm">
+    <h2 id="h-farm">농장</h2>
+    <div class="ggrid">
+      <button class="gcard" type="button" data-set="farm" data-i="0" aria-label="크게 보기: 관목 노지 재배"><span class="gimg"><img src="/assets/gallery/thumb/ogf-farm-01.webp" alt="관목 노지 재배" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">관목 노지 재배</span><span class="gmeta">2026.07</span></button>
+      <button class="gcard" type="button" data-set="farm" data-i="1" aria-label="크게 보기: 컨테이너 관목 재배"><span class="gimg"><img src="/assets/gallery/thumb/ogf-farm-02.webp" alt="컨테이너 관목 재배" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">컨테이너 관목 재배</span><span class="gmeta">2026.07</span></button>
+      <button class="gcard" type="button" data-set="farm" data-i="2" aria-label="크게 보기: 온실 앞 컨테이너 재배"><span class="gimg"><img src="/assets/gallery/thumb/ogf-farm-03.webp" alt="온실 앞 컨테이너 재배" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">온실 앞 컨테이너 재배</span><span class="gmeta">2023.05</span></button>
+      <button class="gcard" type="button" data-set="farm" data-i="3" aria-label="크게 보기: 황금잎 관목 컨테이너 재배"><span class="gimg"><img src="/assets/gallery/thumb/ogf-farm-04.webp" alt="황금잎 관목 컨테이너 재배" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">황금잎 관목 컨테이너 재배</span><span class="gmeta">2024.04</span></button>
+      <button class="gcard" type="button" data-set="farm" data-i="4" aria-label="크게 보기: 그라스류 노지 재배"><span class="gimg"><img src="/assets/gallery/thumb/ogf-farm-05.webp" alt="그라스류 노지 재배" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">그라스류 노지 재배</span><span class="gmeta">2026.10</span></button>
+      <button class="gcard" type="button" data-set="farm" data-i="5" aria-label="크게 보기: 온실 초화류 재배"><span class="gimg"><img src="/assets/gallery/thumb/ogf-farm-06.webp" alt="온실 초화류 재배" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">온실 초화류 재배</span><span class="gmeta">2026.10</span></button>
+      <button class="gcard" type="button" data-set="farm" data-i="6" aria-label="크게 보기: 온실 초화류 베드"><span class="gimg"><img src="/assets/gallery/thumb/ogf-farm-07.webp" alt="온실 초화류 베드" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">온실 초화류 베드</span><span class="gmeta">2026.10</span></button>
+      <button class="gcard" type="button" data-set="farm" data-i="7" aria-label="크게 보기: 초화류 육묘 온실"><span class="gimg"><img src="/assets/gallery/thumb/ogf-farm-08.webp" alt="초화류 육묘 온실" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">초화류 육묘 온실</span><span class="gmeta">2026.10</span></button>
+      <button class="gcard" type="button" data-set="farm" data-i="8" aria-label="크게 보기: 배롱나무와 침엽수"><span class="gimg"><img src="/assets/gallery/thumb/ogf-farm-09.webp" alt="배롱나무와 침엽수" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">배롱나무와 침엽수</span><span class="gmeta">서산</span></button>
+      <button class="gcard" type="button" data-set="farm" data-i="9" aria-label="크게 보기: 배롱나무 개화"><span class="gimg"><img src="/assets/gallery/thumb/ogf-farm-10.webp" alt="배롱나무 개화" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">배롱나무 개화</span><span class="gmeta">서산</span></button>
+    </div>
+  </section>
+  <section class="gsec" id="distribution" aria-labelledby="h-distribution">
+    <h2 id="h-distribution">유통</h2>
+    <div class="ggrid">
+      <button class="gcard" type="button" data-set="distribution" data-i="0" aria-label="크게 보기: 출하 상차"><span class="gimg"><img src="/assets/gallery/thumb/ogf-dist-01.webp" alt="출하 상차" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">출하 상차</span><span class="gmeta">2026.04</span></button>
+      <button class="gcard" type="button" data-set="distribution" data-i="1" aria-label="크게 보기: 카트 적재 상차"><span class="gimg"><img src="/assets/gallery/thumb/ogf-dist-02.webp" alt="카트 적재 상차" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">카트 적재 상차</span><span class="gmeta">2026.10</span></button>
+      <button class="gcard" type="button" data-set="distribution" data-i="2" aria-label="크게 보기: 카트 적재 출하 준비"><span class="gimg"><img src="/assets/gallery/thumb/ogf-dist-03.webp" alt="카트 적재 출하 준비" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">카트 적재 출하 준비</span><span class="gmeta">2026.10</span></button>
+      <button class="gcard" type="button" data-set="distribution" data-i="3" aria-label="크게 보기: 랩핑 후 출하 대기"><span class="gimg"><img src="/assets/gallery/thumb/ogf-dist-04.webp" alt="랩핑 후 출하 대기" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">랩핑 후 출하 대기</span><span class="gmeta">2026.10</span></button>
+      <button class="gcard" type="button" data-set="distribution" data-i="4" aria-label="크게 보기: 출하 대기 카트"><span class="gimg"><img src="/assets/gallery/thumb/ogf-dist-05.webp" alt="출하 대기 카트" loading="lazy" decoding="async" width="720" height="540"></span><span class="gtitle plain">출하 대기 카트</span><span class="gmeta">2026.10</span></button>
+    </div>
+  </section>
+  <section class="gsec" id="events" aria-labelledby="h-events">
+    <h2 id="h-events">행사</h2>
+    <div class="ggrid">
+      <button class="gcard" type="button" data-set="events-0" data-i="0" aria-label="경기정원박람회 사진 5장 보기"><span class="gimg"><img src="/assets/gallery/thumb/ogf-event-01.webp" alt="경기정원박람회" loading="lazy" decoding="async" width="720" height="540"><span class="gcount">5장</span></span><span class="gtitle">경기정원박람회</span><span class="gmeta">2026.10</span></button>
+      <button class="gcard" type="button" data-set="events-1" data-i="0" aria-label="관악도시농업축제 사진 2장 보기"><span class="gimg"><img src="/assets/gallery/thumb/ogf-event-06.webp" alt="관악도시농업축제" loading="lazy" decoding="async" width="720" height="540"><span class="gcount">2장</span></span><span class="gtitle">관악도시농업축제</span><span class="gmeta">2026.10</span></button>
+    </div>
+  </section>
+  <div class="faq-cta">
+    <h2>같은 품종과 규격이 필요하신가요?</h2>
+    <p>현장에 쓰인 품종의 재고와 규격을 카카오톡 채널에서 바로 안내해 드립니다.</p>
+    <a href="https://pf.kakao.com/_lGfxhX/chat" target="_blank" rel="noopener">카카오톡 채널로 견적 받기</a>
+  </div>
+</main>
+
+<div class="glb" id="glb" hidden role="dialog" aria-modal="true" aria-label="사진 크게 보기">
+  <button class="close" type="button">닫기</button>
+  <button class="nav-b prev" type="button" aria-label="이전 사진">&lsaquo;</button>
+  <figure><img id="glbImg" alt=""><figcaption><span><span class="lt" id="glbT"></span><span class="le" id="glbE"></span></span><span class="ld" id="glbD"></span><span class="lm" id="glbM"></span><span class="lm" id="glbP"></span></figcaption></figure>
+  <button class="nav-b next" type="button" aria-label="다음 사진">&rsaquo;</button>
+</div>
+
+<!-- @include fab -->
+
+<!-- @include footer -->
+
+<script>
+// 현장 갤러리 — 카드는 서버 HTML(검색·무JS 대응), 여기서는 크게 보기와 넘김만 담당합니다.
+(function(){
+  var SETS={"construction-0":{"title":"오브제 정원","en":"Object Garden","desc":"흰 오브제 사이로 관목과 숙근초를 심어 빛과 그림자를 담은 정원","meta":"국립정원소재센터 · 2026.09","photos":["/assets/gallery/ogf-con-14.webp","/assets/gallery/ogf-con-15.webp","/assets/gallery/ogf-con-16.webp","/assets/gallery/ogf-con-17.webp","/assets/gallery/ogf-con-18.webp"]},"construction-1":{"title":"여백의 그라스 정원","en":"","desc":"그라스를 성기게 심어 비워 둔 공간을 살린 정원","meta":"광명 · 2025","photos":["/assets/gallery/ogf-con-05.webp","/assets/gallery/ogf-con-06.webp"]},"construction-2":{"title":"자연주의 정원","en":"Dry & Shade","desc":"이끼·고사리의 그늘 정원과 돌·그라스의 마른 정원이 함께 있는 단지","meta":"음성 · 2025","photos":["/assets/gallery/ogf-con-09.webp","/assets/gallery/ogf-con-10.webp","/assets/gallery/ogf-con-11.webp"]},"construction-3":{"title":"카페 정원","en":"European Garden","desc":"작지만 사계절 변화가 보이는 유럽식 정원","meta":"2025.09","photos":["/assets/gallery/ogf-con-12.webp","/assets/gallery/ogf-con-13.webp"]},"construction-4":{"title":"그늘 정원","en":"Shade Garden","desc":"팽나무 아래를 고사리·호스타·아스틸베로 채운 정원","meta":"안양 · 2024","photos":["/assets/gallery/ogf-con-07.webp","/assets/gallery/ogf-con-08.webp"]},"construction-5":{"title":"물길 정원","en":"Water Garden","desc":"물결 연못을 따라 컬러 관목과 초화를 심은 수경 정원","meta":"반포 · 2023","photos":["/assets/gallery/ogf-con-01.webp","/assets/gallery/ogf-con-02.webp"]},"construction-6":{"title":"바위 정원","en":"Rock Garden","desc":"철평석과 현무암으로 바위 틈 지형을 만든 정원","meta":"대전 · 2021","photos":["/assets/gallery/ogf-con-03.webp","/assets/gallery/ogf-con-04.webp"]},"farm":{"title":"","en":"","desc":"","meta":"","photos":["/assets/gallery/ogf-farm-01.webp","/assets/gallery/ogf-farm-02.webp","/assets/gallery/ogf-farm-03.webp","/assets/gallery/ogf-farm-04.webp","/assets/gallery/ogf-farm-05.webp","/assets/gallery/ogf-farm-06.webp","/assets/gallery/ogf-farm-07.webp","/assets/gallery/ogf-farm-08.webp","/assets/gallery/ogf-farm-09.webp","/assets/gallery/ogf-farm-10.webp"],"caps":["관목 노지 재배","컨테이너 관목 재배","온실 앞 컨테이너 재배","황금잎 관목 컨테이너 재배","그라스류 노지 재배","온실 초화류 재배","온실 초화류 베드","초화류 육묘 온실","배롱나무와 침엽수","배롱나무 개화"],"metas":["2026.07","2026.07","2023.05","2024.04","2026.10","2026.10","2026.10","2026.10","서산","서산"]},"distribution":{"title":"","en":"","desc":"","meta":"","photos":["/assets/gallery/ogf-dist-01.webp","/assets/gallery/ogf-dist-02.webp","/assets/gallery/ogf-dist-03.webp","/assets/gallery/ogf-dist-04.webp","/assets/gallery/ogf-dist-05.webp"],"caps":["출하 상차","카트 적재 상차","카트 적재 출하 준비","랩핑 후 출하 대기","출하 대기 카트"],"metas":["2026.04","2026.10","2026.10","2026.10","2026.10"]},"events-0":{"title":"경기정원박람회","en":"","desc":"오픈가든 부스 운영과 컬러 관목 전시 식재","meta":"2026.10","photos":["/assets/gallery/ogf-event-01.webp","/assets/gallery/ogf-event-02.webp","/assets/gallery/ogf-event-03.webp","/assets/gallery/ogf-event-04.webp","/assets/gallery/ogf-event-05.webp"]},"events-1":{"title":"관악도시농업축제","en":"","desc":"제9회 관악도시농업축제 오픈가든 부스 참여","meta":"2026.10","photos":["/assets/gallery/ogf-event-06.webp","/assets/gallery/ogf-event-07.webp"]}};
+  var lb=document.getElementById('glb'),img=document.getElementById('glbImg'),lt=document.getElementById('glbT'),le=document.getElementById('glbE'),
+      ld=document.getElementById('glbD'),lm=document.getElementById('glbM'),pos=document.getElementById('glbP'),
+      prev=lb.querySelector('.prev'),next=lb.querySelector('.next'),close=lb.querySelector('.close');
+  var cur=null,i=0,last=null,sx=null;
+  function show(){
+    var s=cur,n=s.photos.length;
+    img.src=s.photos[i];
+    var t=s.caps?s.caps[i]:s.title;
+    img.alt=t; lt.textContent=t; le.textContent=s.caps?'':(s.en||''); le.hidden=!le.textContent;
+    ld.textContent=s.caps?'':(s.desc||''); ld.hidden=!ld.textContent;
+    lm.textContent=s.metas?s.metas[i]:(s.meta||''); lm.hidden=!lm.textContent;
+    pos.textContent=n>1?(i+1)+' / '+n:''; prev.hidden=next.hidden=n<2;
+    prev.disabled=i===0; next.disabled=i===n-1;
+    if(i+1<n){var pre=new Image();pre.src=s.photos[i+1];}
+  }
+  function open(id,start,from){
+    cur=SETS[id]; if(!cur)return; i=start||0; last=from;
+    lb.hidden=false; document.body.style.overflow='hidden'; show(); (cur.photos.length>1?next:close).focus();
+  }
+  function shut(){lb.hidden=true; document.body.style.overflow=''; img.removeAttribute('src'); if(last&&last.focus)last.focus();}
+  function step(d){var j=i+d; if(!cur||j<0||j>=cur.photos.length)return; i=j; show();}
+  document.addEventListener('click',function(e){
+    var c=e.target.closest('.gcard'); if(c){open(c.dataset.set,+c.dataset.i,c);}
+  });
+  prev.addEventListener('click',function(){step(-1);});
+  next.addEventListener('click',function(){step(1);});
+  close.addEventListener('click',shut);
+  lb.addEventListener('click',function(e){if(e.target===lb)shut();});
+  lb.addEventListener('pointerdown',function(e){sx=e.clientX;});
+  lb.addEventListener('pointerup',function(e){if(sx==null)return;var dx=e.clientX-sx;sx=null;if(Math.abs(dx)>50)step(dx<0?1:-1);});
+  document.addEventListener('keydown',function(e){
+    if(lb.hidden)return;
+    if(e.key==='Escape')shut(); else if(e.key==='ArrowLeft')step(-1); else if(e.key==='ArrowRight')step(1);
+  });
+  // 탭: 지금 보고 있는 구간 표시
+  var tabs=[].slice.call(document.querySelectorAll('.tabs .tab')),secs=[].slice.call(document.querySelectorAll('.gsec'));
+  function spy(){var a=secs.length?secs[0].id:'';secs.forEach(function(s){if(s.getBoundingClientRect().top<=120)a=s.id;});
+    tabs.forEach(function(t){t.classList.toggle('on',t.getAttribute('href')==='#'+a);});}
+  var raf=0; addEventListener('scroll',function(){if(!raf)raf=requestAnimationFrame(function(){raf=0;spy();});},{passive:true}); spy();
+})();
+const hd=document.querySelector('header');
+addEventListener('scroll',()=>hd.classList.toggle('scrolled',scrollY>8),{passive:true});
+</script>
+<script>
+// 모바일 메뉴 — 열기/닫기 + 접근성(ESC·포커스 트랩·스크롤 잠금)
+(function(){
+  var btn=document.getElementById('navToggle'),panel=document.getElementById('mobileNav'),
+      ov=document.getElementById('navOverlay'),closeBtn=document.getElementById('navClose');
+  if(!btn||!panel||!ov)return;
+  var lastFocus=null;
+  function items(){return panel.querySelectorAll('a[href],button:not([disabled])');}
+  function onKey(e){
+    if(e.key==='Escape'){close();return;}
+    if(e.key!=='Tab')return;
+    var f=[].slice.call(items()); if(!f.length)return;
+    var first=f[0],last=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  }
+  function open(){
+    lastFocus=document.activeElement;
+    panel.hidden=false;ov.hidden=false;
+    requestAnimationFrame(function(){panel.classList.add('show');ov.classList.add('show');});
+    btn.setAttribute('aria-expanded','true');
+    btn.setAttribute('aria-label','메뉴 닫기');
+    document.body.style.overflow='hidden';
+    var f=items(); if(f.length)f[0].focus();
+    document.addEventListener('keydown',onKey);
+  }
+  function close(){
+    panel.classList.remove('show');ov.classList.remove('show');
+    btn.setAttribute('aria-expanded','false');
+    btn.setAttribute('aria-label','메뉴 열기');
+    document.body.style.overflow='';
+    document.removeEventListener('keydown',onKey);
+    setTimeout(function(){panel.hidden=true;ov.hidden=true;},280);
+    // 닫으면 항상 햄버거 버튼으로 포커스 복귀 (키보드 사용자 위치 유지)
+    if(btn&&btn.focus)btn.focus(); else if(lastFocus&&lastFocus.focus)lastFocus.focus();
+  }
+  btn.addEventListener('click',open);
+  ov.addEventListener('click',close);
+  if(closeBtn)closeBtn.addEventListener('click',close);
+  [].forEach.call(panel.querySelectorAll('a'),function(a){a.addEventListener('click',close);});
+})();
+</script>
+</body>
+</html>

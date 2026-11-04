@@ -27,6 +27,7 @@ function renderHeader(active) {
   return partial('header')
     .replace('{{ON_ABOUT}}', active === 'about' ? ' on' : '')
     .replace('{{ON_FAQ}}', active === 'faq' ? ' on' : '')
+    .replace('{{ON_GALLERY}}', active === 'gallery' ? ' on' : '')
     .replace('{{CUR_CATALOG}}', active === 'catalog' ? ' aria-current="page"' : '');
 }
 
