@@ -8,6 +8,8 @@
 ```
 public/
   index.html      홈 원페이지 (히어로→밴드→지표→소개→서비스→사례→이용안내→FAQ→CTA→푸터)
+  gallery.html    현장 갤러리: 조성(정원 콘셉트별 카드)·농장·유통·행사 사진, 카드 클릭 → 크게 보기·넘김
+                  사진은 public/assets/gallery/(1600×1200 WebP) + thumb/(720×540). 카드는 정적 HTML, 넘김 데이터는 페이지 스크립트의 SETS
   catalog.html    카탈로그: 검색/필터 → 담기 → 상세 모달 → 견적 접수(연락처) → 접수완료 화면
                   품종 링크 공유: /catalog.html?item=<SKU 또는 레코드ID> 로 해당 품종 상세가 바로 열림
   assets/         로고, og.jpg(카톡 공유 미리보기), 사진
