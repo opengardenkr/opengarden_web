@@ -34,3 +34,25 @@ test('qualified business inquiry stores qualification in existing Airtable memo 
     assert.ok(qualifyInquiry({ ...valid, memo: 'x'.repeat(3000) }).memo.length < 1000);
   } finally { global.fetch = original; }
 });
+
+test('inquiry without catalog items saves the message and rejects empty requests', async () => {
+  const original = global.fetch;
+  let fields, status, result;
+  global.fetch = async (_url, options) => {
+    fields = JSON.parse(options.body).records[0].fields;
+    return { ok: true };
+  };
+  try {
+    const response = { status(n) { status = n; return this; }, json(d) { result = d; } };
+    await handler({ method: 'POST', body: { ...valid, items: [], memo: '목록에 없는 수국 200주 문의' } }, response);
+    assert.equal(status, 200);
+    assert.ok(result.requestNo);
+    assert.equal(fields.품목JSON, '[]');
+    assert.match(fields.품목요약, /목록에 없는 수국 200주/);
+    assert.match(fields.요청사항, /목록에 없는 수국 200주/);
+    fields = undefined;
+    await handler({ method: 'POST', body: { ...valid, items: [], memo: '   ' } }, response);
+    assert.equal(status, 400);
+    assert.equal(fields, undefined);
+  } finally { global.fetch = original; }
+});

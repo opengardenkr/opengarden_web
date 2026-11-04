@@ -77,8 +77,9 @@ module.exports = async (req, res) => {
     } = req.body || {};
 
     if (website) return res.status(200).json({ ok: true }); // 봇 무시
-    if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: '담긴 품목이 없습니다.' });
+    if (!Array.isArray(items)) return res.status(400).json({ error: '품목 정보를 확인해주세요.' });
+    if (items.length === 0 && (typeof memo !== 'string' || !memo.trim())) {
+      return res.status(400).json({ error: '찾는 식물이나 문의 내용을 적어주세요.' });
     }
     // 개인정보 수집·이용 동의 없이는 접수 불가 (클라이언트 우회 방지)
     if (agree !== true) {
@@ -109,7 +110,7 @@ module.exports = async (req, res) => {
 
     const summary = clean
       .map((i, n) => `${n + 1}. ${i.kname} · ${i.size} · ${i.qty}개`)
-      .join('\n');
+      .join('\n') || `직접 문의: ${String(memo).trim().slice(0, 500)}`;
 
     const r = await fetch(
       `https://api.airtable.com/v0/${BASE}/${encodeURIComponent(QTABLE)}`,
