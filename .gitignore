@@ -11,3 +11,4 @@ dist/
 # 주문형 제안서 원본(가격·고객 연락처·열쇠 포함) — 공개 저장소라 커밋 금지
 tools/order-proposal/proposals/
 *.key
+__pycache__/
