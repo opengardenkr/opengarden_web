@@ -1,0 +1,737 @@
+[
+ {
+  "id": "ogf-con-14",
+  "file": "ogf-con-14.webp",
+  "sec": "조성",
+  "label": "오브제 정원 1",
+  "drive": "1nHCL_AplMYCjvHohf6T_sVFwHzUaGNUH",
+  "title": "(멀칭후)완성정원c.jpg",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.0,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-con-15",
+  "file": "ogf-con-15.webp",
+  "sec": "조성",
+  "label": "오브제 정원 2",
+  "drive": "11wnF1lAY-A0Jx16vdGzxtVHMXZaQvY1c",
+  "title": "(확대)오브젝트.jpg",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.19695,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-con-16",
+  "file": "ogf-con-16.webp",
+  "sec": "조성",
+  "label": "오브제 정원 3",
+  "drive": "1zogdPNrOqjOw4t6q2R_Qc6CrC4xywkMG",
+  "title": "(확대)가막살나무.jpg",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.19697,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-con-17",
+  "file": "ogf-con-17.webp",
+  "sec": "조성",
+  "label": "오브제 정원 4",
+  "drive": "1AI3-FwDCQXuzLkFG50Sg8U_dKrpDo37c",
+  "title": "(확대)호스타.jpg",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.19692,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-con-18",
+  "file": "ogf-con-18.webp",
+  "sec": "조성",
+  "label": "오브제 정원 5",
+  "drive": "1VcmtRq4BK-_SrFGe8npWTjDUj1CMQN3U",
+  "title": "국립정원소재센터b.heic",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.42304,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-con-05",
+  "file": "ogf-con-05.webp",
+  "sec": "조성",
+  "label": "여백의 그라스 정원 1",
+  "drive": "1vxZA6CTKaHR7lF1WYJ-e0L5gHfUV-bvI",
+  "title": "시공사례 광명.png",
+  "inset": 49,
+  "crop": {
+   "x": 0.0,
+   "y": 0.14385,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-con-06",
+  "file": "ogf-con-06.webp",
+  "sec": "조성",
+  "label": "여백의 그라스 정원 2",
+  "drive": "14vjonQwAqCAtgGGWTXxNPS8ZbrWgXKQq",
+  "title": "시공사례 광명2.png",
+  "inset": 45,
+  "crop": {
+   "x": 0.0,
+   "y": 0.14514,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-con-09",
+  "file": "ogf-con-09.webp",
+  "sec": "조성",
+  "label": "자연주의 정원 1",
+  "drive": "1qc6C1fGrndNlgOjM0qXEkRsE4myZieN9",
+  "title": "시공사례 음성.png",
+  "inset": 49,
+  "crop": {
+   "x": 0.0,
+   "y": 0.14154,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-con-10",
+  "file": "ogf-con-10.webp",
+  "sec": "조성",
+  "label": "자연주의 정원 2",
+  "drive": "1nqayl1_H1QcF0fwa2BkUNaeo5bbtaa4N",
+  "title": "시공사례 음성2.png",
+  "inset": 45,
+  "crop": {
+   "x": 0.0,
+   "y": 0.10085,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-con-11",
+  "file": "ogf-con-11.webp",
+  "sec": "조성",
+  "label": "자연주의 정원 3",
+  "drive": "16R_hte51prI8vR3h1EjDAYC1PG-Az4q8",
+  "title": "시공사례 음성3.png",
+  "inset": 30,
+  "crop": {
+   "x": 0.0,
+   "y": 0.13826,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-con-12",
+  "file": "ogf-con-12.webp",
+  "sec": "조성",
+  "label": "카페 정원 1",
+  "drive": "1mY8GGz0vQ3Uqtmn9zVHunLXIt9V3IazL",
+  "title": "현장 무늬쥐똥2.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.0,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-con-13",
+  "file": "ogf-con-13.webp",
+  "sec": "조성",
+  "label": "카페 정원 2",
+  "drive": "1OGATc9_56SclLizq-YvSt5N2Ler5QVGn",
+  "title": "현장 무늬쥐똥3.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.0,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-con-07",
+  "file": "ogf-con-07.webp",
+  "sec": "조성",
+  "label": "그늘 정원 1",
+  "drive": "128FSzIFy9C8S82h2fPXtQyE2yPO-IMzh",
+  "title": "시공사례 안양.png",
+  "inset": 49,
+  "crop": {
+   "x": 0.0,
+   "y": 0.14385,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-con-08",
+  "file": "ogf-con-08.webp",
+  "sec": "조성",
+  "label": "그늘 정원 2",
+  "drive": "1OLaWH3t_DBoUvt-MgeWnOFXgK585NtZp",
+  "title": "시공사례 안양2.png",
+  "inset": 30,
+  "crop": {
+   "x": 0.0,
+   "y": 0.14753,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-con-01",
+  "file": "ogf-con-01.webp",
+  "sec": "조성",
+  "label": "물길 정원 1",
+  "drive": "1PTQdt2Yvzo6-n5Q9OYIY0Qmqu610BdIU",
+  "title": "시공사례 반포.png",
+  "inset": 49,
+  "crop": {
+   "x": 0.0,
+   "y": 0.0,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-con-02",
+  "file": "ogf-con-02.webp",
+  "sec": "조성",
+  "label": "물길 정원 2",
+  "drive": "1Q1YSgdzAczVwD3VpHMWZHJoMFyQKdwMH",
+  "title": "시공사례 반포2.png",
+  "inset": 49,
+  "crop": {
+   "x": 0.0,
+   "y": 0.11433,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-con-03",
+  "file": "ogf-con-03.webp",
+  "sec": "조성",
+  "label": "바위 정원 1",
+  "drive": "1GZjORI1na3O6yNvMPWFEYxG9DtP_Elaz",
+  "title": "시공사례 대전.png",
+  "inset": 49,
+  "crop": {
+   "x": 0.0,
+   "y": 0.01716,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-con-04",
+  "file": "ogf-con-04.webp",
+  "sec": "조성",
+  "label": "바위 정원 2",
+  "drive": "1NXAHl8h2eQ21L-NtXu-MxgB9h-7icC_W",
+  "title": "시공사례 대전2.png",
+  "inset": 45,
+  "crop": {
+   "x": 0.0,
+   "y": 0.04898,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-farm-05",
+  "file": "ogf-farm-05.webp",
+  "sec": "농장",
+  "label": "그라스류 노지 재배",
+  "drive": "1mGI6GLkyWWXgGxyR5aBYYCZ_xLyLSMWt",
+  "title": "농장 그라스.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0.24902,
+   "y": 0.0,
+   "w": 0.75048
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-farm-06",
+  "file": "ogf-farm-06.webp",
+  "sec": "농장",
+  "label": "온실 초화류 재배",
+  "drive": "1niSP6MOVAE1sqj4twGzF8Tmppaix8uLm",
+  "title": "농장 초화.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0.09627,
+   "y": 0.0,
+   "w": 0.75048
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-farm-07",
+  "file": "ogf-farm-07.webp",
+  "sec": "농장",
+  "label": "온실 초화류 베드",
+  "drive": "1l9kN3gwC3SzgxB0A_7euECQ8fZooVlIP",
+  "title": "농장 초화2.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0.1524,
+   "y": 0.0,
+   "w": 0.75048
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-farm-08",
+  "file": "ogf-farm-08.webp",
+  "sec": "농장",
+  "label": "초화류 육묘 온실",
+  "drive": "1ATt_e42ZCX2GgtuGnUrk-Hqyuyk_gXdz",
+  "title": "농장 초화3.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.26,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-farm-02",
+  "file": "ogf-farm-02.webp",
+  "sec": "농장",
+  "label": "컨테이너 관목 재배",
+  "drive": "15ps1FEYWIV9bgXQz-p3getA8dnfIyh3N",
+  "title": "농장 열린5.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.02348,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-farm-01",
+  "file": "ogf-farm-01.webp",
+  "sec": "농장",
+  "label": "관목 노지 재배",
+  "drive": "1szHkTQagRt6uQ6f2qjhgxJFt5zG4o3i_",
+  "title": "농장 열린2.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.0,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-farm-04",
+  "file": "ogf-farm-04.webp",
+  "sec": "농장",
+  "label": "황금잎 관목 컨테이너 재배",
+  "drive": "1dcM-J1JcyFQLxbJV-wnGCXYoSsz88878",
+  "title": "농장 열린7.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.0,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-farm-03",
+  "file": "ogf-farm-03.webp",
+  "sec": "농장",
+  "label": "온실 앞 컨테이너 재배",
+  "drive": "1r2yy36sY_0YMCb_fzgfWwQAclYjz5bz1",
+  "title": "농장 열린8.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.0,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-farm-09",
+  "file": "ogf-farm-09.webp",
+  "sec": "농장",
+  "label": "배롱나무와 침엽수",
+  "drive": "10GPbOPpq3ADV8h_jLPO_FFhXhkZl0cvW",
+  "title": "농장 서산.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.0,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-farm-10",
+  "file": "ogf-farm-10.webp",
+  "sec": "농장",
+  "label": "배롱나무 개화",
+  "drive": "1_vbAS8h_OZR1tiNCpFG7G4E-7SZrYFIl",
+  "title": "농장 서산2.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.0,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-imp-01",
+  "file": "ogf-imp-01.webp",
+  "sec": "수입",
+  "label": "선적 준비 카트",
+  "drive": "1GmyICA4l95mM5ACnFZNb-IfGWJMmdZJP",
+  "title": "수입 수입과정.HEIC",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.24405,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-imp-02",
+  "file": "ogf-imp-02.webp",
+  "sec": "수입",
+  "label": "은청가문비 묘목",
+  "drive": "1lzoTowEqYJzGkMEwX6LrAU2UbNAHKgBC",
+  "title": "수입 해외농가_은청가문비.HEIC",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.29094,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-imp-03",
+  "file": "ogf-imp-03.webp",
+  "sec": "수입",
+  "label": "온실 플러그묘 생산",
+  "drive": "1gvq8tUQP6u4p6od-5jA_Y1et6cFU7C-v",
+  "title": "수입 해외농가5.HEIC",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.0,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-imp-04",
+  "file": "ogf-imp-04.webp",
+  "sec": "수입",
+  "label": "해외 농가 노지 재배장",
+  "drive": "1eLFlwMvzgsSWIMR195IXNVRVKHhY4_D-",
+  "title": "수입 해외농가4.HEIC",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.0,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-imp-05",
+  "file": "ogf-imp-05.webp",
+  "sec": "수입",
+  "label": "황금잎 관목 재배장",
+  "drive": "1r99RL9GV5rAsXv5FqiwywH1CnqHORe4Q",
+  "title": "수입 해외농가3.HEIC",
+  "inset": 0,
+  "crop": {
+   "x": 0,
+   "y": 0.0,
+   "w": 1
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-imp-06",
+  "file": "ogf-imp-06.webp",
+  "sec": "수입",
+  "label": "말채나무 묘목",
+  "drive": "1P6AMnl-0rQmX7VA9acYBr_YQjYcE7dMD",
+  "title": "수입 해외농가_말채.HEIC",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.35432,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-imp-07",
+  "file": "ogf-imp-07.webp",
+  "sec": "수입",
+  "label": "관목 컨테이너 재배장",
+  "drive": "1pLktI9TFZIZ8abpxtH-6Gt6Fb91Uuc3e",
+  "title": "수입 해외농가2.HEIC",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.39359,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-imp-08",
+  "file": "ogf-imp-08.webp",
+  "sec": "수입",
+  "label": "매자나무 묘목",
+  "drive": "1u5uBtZKc8gSpQ4kzjIEK5kaSta_2pw2N",
+  "title": "수입 해외농가_매자.HEIC",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.25503,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-imp-09",
+  "file": "ogf-imp-09.webp",
+  "sec": "수입",
+  "label": "유리온실 육묘장",
+  "drive": "1Hk1uzbejMKg-yuTjTKt4joFRl_vtZuvy",
+  "title": "수입 해외농가.HEIC",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.24173,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-dist-02",
+  "file": "ogf-dist-02.webp",
+  "sec": "유통",
+  "label": "카트 적재 상차",
+  "drive": "1wcjvJFN5MUoNOgQAqYWQxyToh-sXD8Nm",
+  "title": "상차.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0.09955,
+   "y": 0.0,
+   "w": 0.75048
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-dist-04",
+  "file": "ogf-dist-04.webp",
+  "sec": "유통",
+  "label": "랩핑 후 출하 대기",
+  "drive": "1VcJ2ZqE8iD8ufu3i6JOvI540GqgBCAfa",
+  "title": "상차3.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.31078,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-dist-03",
+  "file": "ogf-dist-03.webp",
+  "sec": "유통",
+  "label": "카트 적재 출하 준비",
+  "drive": "1j_cYoGoy1bP9FzOOzr4MRdB5WAiuQGT5",
+  "title": "상차4.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.20945,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-dist-05",
+  "file": "ogf-dist-05.webp",
+  "sec": "유통",
+  "label": "출하 대기 카트",
+  "drive": "1Y73LJAkodRV9zieg7bV6C9jCNdIiwRO1",
+  "title": "상차5.HEIC",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.3182,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-dist-01",
+  "file": "ogf-dist-01.webp",
+  "sec": "유통",
+  "label": "출하 상차",
+  "drive": "1arKUhdhvG3uIahzblrGqTOJtH4OonMJ1",
+  "title": "상차 2.jpeg",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.0,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-event-06",
+  "file": "ogf-event-06.webp",
+  "sec": "행사",
+  "label": "관악도시농업축제 1",
+  "drive": "1r8dr4yHdN3ikGslegA3Nerc6yhwMDfmN",
+  "title": "행사 관악도시농업축제.HEIC",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.35293,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-event-07",
+  "file": "ogf-event-07.webp",
+  "sec": "행사",
+  "label": "관악도시농업축제 2",
+  "drive": "1R2UKRFv1iNCm1mvNeQWxPCA_wxybNStG",
+  "title": "행사 관악도시농업축제2.heic",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.31836,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-event-05",
+  "file": "ogf-event-05.webp",
+  "sec": "행사",
+  "label": "경기정원박람회 5",
+  "drive": "17g3xSBfSw2F1zv0rPweLaz9WvSRonWxd",
+  "title": "행사 경기정원박람회.HEIC",
+  "inset": 0,
+  "crop": {
+   "x": 0.0,
+   "y": 0.36197,
+   "w": 1.0
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-event-01",
+  "file": "ogf-event-01.webp",
+  "sec": "행사",
+  "label": "경기정원박람회 1",
+  "drive": "1i5PFGeGf7Se3Bn8iQKeInKVRh12R2DVO",
+  "title": "행사 경기정원박람회2.heic",
+  "inset": 0,
+  "crop": {
+   "x": 0.125,
+   "y": 0,
+   "w": 0.75
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-event-02",
+  "file": "ogf-event-02.webp",
+  "sec": "행사",
+  "label": "경기정원박람회 2",
+  "drive": "1Ms8sDFR5wqh4Ww3TwW5seP3vuVRMHiXF",
+  "title": "행사 경기정원박람회3.heic",
+  "inset": 0,
+  "crop": {
+   "x": 0.06532,
+   "y": 0.00025,
+   "w": 0.75
+  },
+  "edited": true
+ },
+ {
+  "id": "ogf-event-03",
+  "file": "ogf-event-03.webp",
+  "sec": "행사",
+  "label": "경기정원박람회 3",
+  "drive": "1lViYDAH3x2X0V1Ph_4CbtjcoPd1wrdsh",
+  "title": "행사 경기정원박람회4.heic",
+  "inset": 0,
+  "crop": {
+   "x": 0.125,
+   "y": 0,
+   "w": 0.75
+  },
+  "edited": false
+ },
+ {
+  "id": "ogf-event-04",
+  "file": "ogf-event-04.webp",
+  "sec": "행사",
+  "label": "경기정원박람회 4",
+  "drive": "1t6ZsM4x8HSz0uLuM2_Cn9y_e1NYnpdxN",
+  "title": "행사 경기정원박람회5.heic",
+  "inset": 0,
+  "crop": {
+   "x": 0.125,
+   "y": 0,
+   "w": 0.75
+  },
+  "edited": false
+ }
+]
