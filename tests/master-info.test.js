@@ -44,3 +44,11 @@ test('master lookup fields never include price fields', () => {
   const priceIds = ['flddWryT0w8bnvmis', 'fld7phSyk71vg8cTj', 'fldVWhwSmfG1HBs0H', 'fldh2LU8RdOMgPh8E', 'fldG0nT3AhhIgQwm8'];
   for (const id of Object.values(F)) assert.ok(!priceIds.includes(id));
 });
+
+test('lookup values given per linked record are flattened in link order', () => {
+  const v = (x) => ({ linkedRecordIds: ['recA'], valuesByLinkedRecordId: { recA: x } });
+  const info = masterInfo({ [F.masterDesc]: v(['설명']), [F.heightMin]: v([100]), [F.heightMax]: v([150]), [F.review]: v([{ name: 'AI 초안' }]) }, F);
+  assert.equal(info.height, '100–150 cm');
+  assert.equal(info.desc, '설명');
+  assert.deepEqual(attachmentsOf({ [F.masterImage]: v([att('m1')]) }, F).map((a) => a.id), ['m1']);
+});
