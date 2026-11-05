@@ -159,6 +159,7 @@ select{border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;font
 .overlay.show .modal{transform:none}
 @media(min-width:640px){.modal{border-radius:20px}}
 .modal h2{font-size:20px;font-weight:800}
+.dcredit{font-size:11px;color:var(--gray);margin:6px 2px 0;text-align:right}
 .modal .desc{font-size:13.5px;color:var(--gray);margin:6px 0 18px}
 .item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
 .item .n{font-size:14px;font-weight:700}
@@ -765,9 +766,11 @@ function renderDetail(){
          ${gShots.map((u,i)=>`<button class="gthumb" role="tab" data-i="${i}" aria-selected="${i===0}" aria-label="사진 ${i+1}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join('')}
        </div>`:''}`
     : `<div class="dphoto">식물 사진 준비 중</div>`;
+  // 육종사·공급사 사진은 저작자를 작게 표기합니다(품종 마스터 '사진 출처')
+  const credit=gShots.length&&clean(p.credit)?`<p class="dcredit">사진 ${esc(p.credit)}</p>`:'';
   const brief=CatalogInfo.summary(p), facts=brief.facts, description=brief.description;
   document.getElementById('dBody').innerHTML=`
-    <div class="detail-layout"><div class="detail-gallery">${gallery}</div><div class="detail-copy">
+    <div class="detail-layout"><div class="detail-gallery">${gallery}${credit}</div><div class="detail-copy">
     ${clean(it.cat)?`<div class="detail-category">${esc(it.cat)}</div>`:''}
     <h2 class="dk">${esc(it.kname)}</h2>
     ${clean(it.sname)?`<p class="ds">${esc(it.sname)}</p>`:''}
@@ -1061,7 +1064,8 @@ addEventListener('scroll',()=>hd.classList.toggle('scrolled',scrollY>8),{passive
         height:clean(x.height),spread:clean(x.spread),light:clean(x.light),
         soil:clean(x.soil),moisture:clean(x.moisture),foliage:clean(x.foliage),
         flowering:clean(x.flowering),planting:clean(x.planting),
-        difficulty:clean(x.difficulty),tags:Array.isArray(x.tags)?x.tags:[]
+        difficulty:clean(x.difficulty),tags:Array.isArray(x.tags)?x.tags:[],
+        series:clean(x.series),award:clean(x.award),credit:clean(x.credit)
       }));
       loaded.set(source.group,items);
       update();

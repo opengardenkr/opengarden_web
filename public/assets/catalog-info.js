@@ -31,6 +31,9 @@
     const facts=fields.map(([key,label])=>({key,label,value:clip(source[key],60)||'미확인'}));
     // Temperature alone is not a USDA zone. Preserve it without inventing a conversion.
     if(text(source.zone)&&!/(?:zone|존)\s*\d/i.test(text(source.zone)))facts[1]={key:'zone',label:'내한성 (등록값)',value:clip(source.zone,60)};
+    // 품종 마스터에서 확인된 값만 덧붙입니다. 비어 있으면 줄 자체를 만들지 않습니다(미확인 표시 없음).
+    [['height','성목 높이'],['spread','성목 너비'],['series','시리즈'],['award','수상']]
+      .forEach(([key,label])=>{const value=clip(source[key],60);if(value)facts.push({key,label,value});});
     const tags=Array.isArray(source.tags)?source.tags.map(v=>clip(v,30)).filter(Boolean).slice(0,4):[];
     const prefix=facts.map(f=>f.label+': '+f.value).concat(tags).join(' · ');
     const description=clip([text(source.desc),text(source.use)].filter(Boolean).join(' · '),Math.max(0,SUMMARY_LIMIT-Array.from(prefix).length-3));
