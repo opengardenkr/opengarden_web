@@ -21,6 +21,9 @@
     },
     "api/order-page.js": {
       "includeFiles": "tools/order-proposal/template.html"
+    },
+    "api/order-photo.js": {
+      "includeFiles": "public/assets/logo.png"
     }
   }
 }

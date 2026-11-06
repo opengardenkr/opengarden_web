@@ -78,6 +78,11 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 .all{height:32px;padding:0 9px;border:1px solid #C9D1C4;border-radius:8px;background:#fff;font-size:12px;font-weight:700;color:var(--green);white-space:nowrap}
 .all:active,.all.on{background:var(--green);border-color:var(--green);color:#fff}
 .o-warn{grid-column:1/-1;font-size:12px;color:var(--warn);font-weight:600}
+.c-warn{font-size:12.5px;color:var(--warn);font-weight:700;margin:8px 0 0}
+.card.short{box-shadow:0 0 0 2px var(--warn) inset}
+.srch{margin:0 0 14px}.srch input{width:100%;box-sizing:border-box;height:44px;border:1px solid var(--line);border-radius:12px;padding:0 14px;font-size:15px;background:#fff}
+.srch-none{color:var(--gray);font-size:14px;text-align:center;margin:18px 0}
+.prog-txt.bad{color:var(--warn)}
 .terms{margin:26px 0 8px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px}
 .terms h2{font-size:16px;font-weight:800;color:var(--green);margin-bottom:8px}
 .terms ul{list-style:none;display:flex;flex-direction:column;gap:7px;font-size:13.5px;color:#3f4a3c}
@@ -148,6 +153,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 <main class="wrap">
   <p class="for" id="forWho" hidden></p>
   <p class="howto">필요한 품목에 <b>%%QTYLABEL%%</b>을 넣고 아래 <b>%%WORD%% 요청</b>을 누르면 담당자에게 바로 전달됩니다. 확인 후 견적서를 보내드립니다.</p>
+  <div class="srch" id="srchBox" hidden><input id="srch" type="search" enterkeyhint="search" placeholder="품종 검색 (예: 목수국, Limelight)" aria-label="품종 검색"><p class="srch-none" id="srchNone" hidden>찾는 품종이 없습니다</p></div>
   <div id="secure">%%SECURE%%</div>
   <section class="terms"%%TERMSHIDDEN%%><h2>거래 조건 및 안내</h2><ul>%%TERMS%%</ul></section>
   <p class="foot">Open Garden · 오픈가든 · open-garden.co.kr</p>
@@ -239,12 +245,34 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
       var all = o.querySelector('.all');
       if (all) all.addEventListener('click', function(){ setQty(o, parseInt(o.dataset.max, 10)); update(); });
       o.querySelector('.minus').addEventListener('click', function(){ setQty(o, qtyOf(o) - stepOf(o)); update(); });
-      o.querySelector('.plus').addEventListener('click', function(){ setQty(o, qtyOf(o) + stepOf(o)); update(); });
+      o.querySelector('.plus').addEventListener('click', function(){
+        var n = qtyOf(o) + stepOf(o);
+        if (CFG.minEach && !o.dataset.pack && cardQty(o) === 0) n = CFG.minEach;
+        setQty(o, n); update();
+      });
       inp.addEventListener('input', function(){ o.classList.toggle('on', qtyOf(o) > 0); update(); });
       inp.addEventListener('change', function(){ setQty(o, qtyOf(o)); update(); });
       inp.addEventListener('focus', function(){ if (inp.value === '0') inp.select(); });
     });
+    if (CFG.search) setupSearch();
     update();
+  }
+
+  // 같은 카드(품종)의 규격 줄 합계
+  function cardQty(o){
+    var c = o.closest('.card'); if (!c) return qtyOf(o);
+    return [].slice.call(c.querySelectorAll('.opt')).reduce(function(s, x){ var p = parseInt(x.dataset.pack, 10) || 0; return s + (p ? qtyOf(x) * p : qtyOf(x)); }, 0);
+  }
+  function setupSearch(){
+    var box = $('srchBox'), inp = $('srch'); box.hidden = false;
+    var cards = [].slice.call(document.querySelectorAll('.card'));
+    cards.forEach(function(c){ c._t = (c.textContent || '').toLowerCase().replace(/\s+/g, ' '); });
+    inp.addEventListener('input', function(){
+      var q = inp.value.trim().toLowerCase(), any = false;
+      cards.forEach(function(c){ var ok = !q || c._t.indexOf(q) >= 0; c.hidden = !ok; if (ok) any = true; });
+      [].slice.call(document.querySelectorAll('section.grp')).forEach(function(g){ g.hidden = !g.querySelector('.card:not([hidden])'); });
+      $('srchNone').hidden = any;
+    });
   }
 
   function stepOf(o){ return parseInt(o.dataset.step, 10) || 100; }
@@ -273,13 +301,31 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
     $('cnt').textContent = list.length ? '선택 ' + list.length + '개 품목' + (CFG.unit ? ' · ' + fmt(list.reduce(function(s,i){return s+i.qty;},0)) + CFG.unit : '') : '선택한 품목이 없습니다';
     $('tot').innerHTML = '₩' + fmt(total) + '<small>VAT 별도</small>';
     var t = $('progT');
-    if (!CFG.min) { $('prog').hidden = true; t.hidden = true; }
+    // 수량 규칙: 품종당 최소(minEach) · 전체 최소(minTotal)
+    var short = 0, qty = list.reduce(function(s,i){ return s + i.bulbs; }, 0);
+    if (CFG.minEach) {
+      [].slice.call(document.querySelectorAll('.card')).forEach(function(c){
+        var o = c.querySelector('.opt'), q = o ? cardQty(o) : 0, w = c.querySelector('.c-warn');
+        var bad = q > 0 && q < CFG.minEach; if (bad) short++;
+        c.classList.toggle('short', bad);
+        if (w) { w.hidden = !bad; w.textContent = bad ? '품종당 ' + fmt(CFG.minEach) + CFG.unit + '부터 주문할 수 있습니다 (지금 ' + fmt(q) + CFG.unit + ')' : ''; }
+      });
+    }
+    if (CFG.minTotal || CFG.minEach) {
+      $('prog').hidden = !CFG.minTotal; t.hidden = false;
+      if (CFG.minTotal) $('progI').style.width = (Math.min(1, qty / CFG.minTotal) * 100) + '%';
+      if (short) { t.textContent = '최소 수량이 안 된 품종 ' + short + '개 — 품종당 ' + fmt(CFG.minEach) + CFG.unit + '부터'; t.className = 'prog-txt bad'; }
+      else if (CFG.minTotal && qty < CFG.minTotal) { t.textContent = '총 ' + fmt(CFG.minTotal) + CFG.unit + '부터 주문 — ' + fmt(CFG.minTotal - qty) + CFG.unit + ' 남음'; t.className = 'prog-txt'; }
+      else if (CFG.minTotal) { t.textContent = '최소 주문 수량(' + fmt(CFG.minTotal) + CFG.unit + ')을 충족했습니다'; t.className = 'prog-txt ok'; }
+      else { t.textContent = ''; t.hidden = true; }
+    }
+    else if (!CFG.min) { $('prog').hidden = true; t.hidden = true; }
     else {
       $('progI').style.width = (Math.min(1, total / CFG.min) * 100) + '%';
       if (total >= CFG.min) { t.textContent = '최소 주문 금액(' + CFG.minLabel + ')을 충족했습니다'; t.className = 'prog-txt ok'; }
       else { t.textContent = '최소 주문 ' + CFG.minLabel + '까지 ₩' + fmt(CFG.min - total) + ' 남음'; t.className = 'prog-txt'; }
     }
-    $('go').disabled = list.length === 0;
+    $('go').disabled = list.length === 0 || ((CFG.minEach || CFG.minTotal) && (short > 0 || (CFG.minTotal && qty < CFG.minTotal)));
     var s = {}; list.forEach(function(i){ s[i.id] = i.qty; });
     try { localStorage.setItem(KEY, JSON.stringify(s)); } catch(e) {}
     return { list:list, total:total };
