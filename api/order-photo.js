@@ -9,7 +9,20 @@ const TOKEN = process.env.AIRTABLE_TOKEN;
 const TABLE = 'tbln0zg9JdWCJKoFU'; // 식물 등록 마스터
 const PHOTO = 'fldkieDK6VuDl3bkW'; // 사진
 
-const urls = new Map(); // 레코드ID → { until, promise }
+const { listAll } = require('../lib/hg-pool');
+// 주문서 품종 사진 주소를 한 번에 읽어 30분 재사용 — 사진마다 에어테이블을 부르면 초당 5회 제한에 걸려 뒤쪽 사진이 안 뜬다
+let bulk = null;
+function bulkUrls() {
+  if (bulk && bulk.until > Date.now()) return bulk.promise;
+  const promise = listAll(TABLE, '{공동주문 규격수}>0', [PHOTO]).then((recs) => new Map(recs.map((r) => {
+    const a = ((r.fields || {})[PHOTO] || [])[0];
+    return [r.id, (a && a.url) || null];
+  })));
+  bulk = { until: Date.now() + 30 * 60000, promise };
+  promise.catch(() => { if (bulk && bulk.promise === promise) bulk = null; });
+  return promise;
+}
+const urls = new Map(); // 레코드ID → { until, promise } (주문서 밖 레코드용 개별 조회)
 async function photoUrl(id) {
   let e = urls.get(id);
   if (!e || e.until <= Date.now()) {
@@ -37,15 +50,16 @@ module.exports = async (req, res) => {
   if (!/^rec[A-Za-z0-9]{14}$/.test(id)) return res.status(400).end();
   if (!BASE || !TOKEN) return res.status(503).end();
   try {
-    const src = await photoUrl(id);
+    const map = await bulkUrls().catch(() => null);
+    const src = map && map.has(id) ? map.get(id) : await photoUrl(id);
     if (!src) return res.status(404).end();
     if (!allowedImage(src)) throw new Error('Untrusted attachment');
     const r = await fetch(src, { redirect: 'error', signal: AbortSignal.timeout(10000) });
-    const out = await watermark(await readImage(r), req.query.w === '520' ? 520 : 1600);
+    const out = await watermark(await readImage(r), ({ 520: 520, 800: 800 })[req.query.w] || 1600);
     res.setHeader('Content-Type', 'image/webp');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Robots-Tag', 'noindex');
-    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+    res.setHeader('Cache-Control', req.query.v ? 'public, max-age=86400, s-maxage=604800, immutable' : 'public, s-maxage=3600, stale-while-revalidate=86400');
     return res.status(200).end(out);
   } catch {
     res.setHeader('Cache-Control', 'no-store');

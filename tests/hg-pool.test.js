@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
-const { poolItems, catOf, cleanLatin, GROUPS, FIELDS: F } = require('../lib/hg-pool');
+const { poolItems, catOf, cleanLatin, GROUPS, FIELDS: F, INFO_FIELDS: INFO } = require('../lib/hg-pool');
 const { qtyRule } = require('../api/order-page');
 const { renderSections, renderPage } = require('../lib/order-page');
 
@@ -24,7 +24,9 @@ test('pool merges sizes of one variety into one card and drops unchecked, exclud
   assert.deepEqual(h.rows[0], ['P9', 536, 4500, 0]);
   assert.deepEqual(h.feat, ['흰꽃이 분홍·와인색으로 변함', '컴팩트 수형']);
   assert.deepEqual(h.h, [120, 150]);
-  assert.equal(h.img, `/api/order-photo?id=${M1}&w=520`);
+  assert.equal(h.img, `/api/order-photo?id=${M1}&w=800`);
+  assert.equal(h.imgBig, `/api/order-photo?id=${M1}&w=1600`);
+  assert.equal(h.genus, 'Hydrangea pan');
   assert.equal(h.unit, '주');
   const b = items.find((i) => i.grp === '매자나무');
   assert.deepEqual(b.feat, []); // 검토상태 '확인 필요'면 특징을 내보내지 않는다
@@ -56,4 +58,21 @@ test('order page blocks requests under the per-variety and total minimums', () =
   assert.match(html, /class="c-warn" hidden/);
   const script = html.match(/<script>([\s\S]*?)<\/script>\s*<\/body>/)[1];
   assert.doesNotThrow(() => new vm.Script(script));
+});
+
+test('genus info card goes before 2+ varieties of the same genus, with stats and editable lines', () => {
+  const r = (id, latin, price, h) => ({ id, fields: { [F.pool]: true, [F.sname]: latin, [F.kname]: latin, [F.size]: 'P9', [F.price]: price, [F.master]: [id.replace('x', 'M')], [F.hmin]: [h[0]], [F.hmax]: [h[1]] } });
+  const recs = [r('rec0000000000000x1', "Berberis thunb. 'A'", 3900, [40, 60]), r('rec0000000000000x2', "Berberis thunb. 'B'", 4500, [80, 120]), r('rec0000000000000x3', "Spiraea japonica 'C'", 3900, [30, 50])];
+  const info = [{ id: 'recI', fields: { [INFO.key]: 'Berberis', [INFO.title]: '매자나무 (Berberis)', [INFO.lines]: '줄1\n줄2', [INFO.on]: true } }];
+  const items = poolItems(recs, info);
+  const i0 = items.findIndex((x) => x.kind === 'info');
+  assert.equal(items.filter((x) => x.kind === 'info').length, 1); // 1품종짜리 수종은 안내 카드 없음
+  assert.equal(items[i0 + 1].genus, 'Berberis');
+  assert.deepEqual(items[i0].lines, ['줄1', '줄2']);
+  assert.equal(items[i0].name, '매자나무 (Berberis)');
+  assert.deepEqual(items[i0].stats, { n: 2, h: [40, 120], p: [3900, 4500] });
+  const html = renderSections({ title: 't', groups: GROUPS, items }).sections;
+  assert.match(html, /class="card info" data-genus="Berberis"/);
+  assert.match(html, /2품종 · 키 40~120cm · ₩3,900~₩4,500/);
+  assert.match(html, /꽃관목<\/span><small>Shrubs · 1품종/); // 안내 카드는 품종 수에 안 들어감
 });
