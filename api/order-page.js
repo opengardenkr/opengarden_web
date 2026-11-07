@@ -6,6 +6,7 @@
 
 const { renderSections, renderPage, esc, unitOf } = require('../lib/order-page');
 const { GROUPS } = require('../lib/catalog-data');
+const pool = require('../lib/hg-pool');
 
 const BASE = process.env.AIRTABLE_BASE_ID;
 const TOKEN = process.env.AIRTABLE_TOKEN;
@@ -51,7 +52,7 @@ const IMG_RE = /^\/p\/[a-z0-9-]{8,64}\/img\/[a-z0-9]{1,6}\.jpg$/;
 function toItems(raw) {
   const data = JSON.parse(raw || '{}');
   if (!data || data.v !== 1 || !Array.isArray(data.items)) throw new Error('품목JSON 형식');
-  return data.items.slice(0, 200).map((it, i) => {
+  return data.items.slice(0, 600).map((it, i) => {
     const rows = (Array.isArray(it.rows) ? it.rows : []).slice(0, 10)
       .filter((r) => Array.isArray(r) && typeof r[0] === 'string' && r[0].trim() && Number(r[2]) > 0)
       .map((r) => [r[0].slice(0, 20), stockOf(r[1]), Math.round(Number(r[2])), int(r[3]) || 0, Number.isInteger(r[4]) && r[4] > 0 && r[4] <= 100000 ? r[4] : 0]);
@@ -73,6 +74,12 @@ function toItems(raw) {
       rows,
     };
   }).filter((it) => it.name && it.rows.length);
+}
+
+/** 수량 규칙(선택): minEach = 품종(카드)당 최소 수량, minTotal = 주문 전체 최소 수량. 단위는 품목 단위(주·구). */
+function qtyRule(data) {
+  const n = (v) => (Number.isInteger(v) && v > 0 && v <= 1000000 ? v : 0);
+  return { minEach: n(data && data.minEach), minTotal: n(data && data.minTotal) };
 }
 
 /** 품목JSON의 groups(선택) = [[표시명, 영문]] — 묶음 순서·영문 소제목 */
@@ -102,7 +109,11 @@ module.exports = async (req, res) => {
     const status = f[F.status] && typeof f[F.status] === 'object' ? f[F.status].name : f[F.status];
     if (status === '마감') return send(res, 410, message('마감된 주문서입니다', '새 주문서가 필요하시면 카카오톡 채널로 알려주세요.'));
 
-    const items = toItems(f[F.items]);
+    // 공동수입 주문서: 품목JSON = {"v":1,"src":"hg-pool","minEach":200,"minTotal":600} — 품목은 호게나르드 DM에서 바로 읽는다
+    const raw = JSON.parse(f[F.items] || '{}');
+    const isPool = raw && raw.v === 1 && raw.src === 'hg-pool';
+    const items = isPool ? await pool.loadPool() : toItems(f[F.items]);
+    const rule = qtyRule(raw);
     if (!items.length) return send(res, 404, message('주문서를 찾을 수 없습니다', '담긴 품목이 없습니다.'));
     const iso = typeof f[F.date] === 'string' ? f[F.date] : '';
     const min = Number.isInteger(f[F.min]) && f[F.min] > 0 ? f[F.min] : 0;
@@ -111,7 +122,7 @@ module.exports = async (req, res) => {
       title: String(f[F.title] || '오픈가든 주문서').slice(0, 60),
       date: dotDate(iso),
       basis: iso ? `${iso} 재고 기준` : '오픈가든 주문서',
-      groups: toGroups(f[F.items]),
+      groups: isPool ? pool.GROUPS : toGroups(f[F.items]),
       items,
     };
     const { nav, sections } = renderSections(spec);
@@ -122,8 +133,12 @@ module.exports = async (req, res) => {
       word: '주문', unit: unitOf(items), nav, pageUrl,
       ogImage: `${SITE}/assets/og-order.jpg`, ogDim: true,
       secure: sections, terms,
-      notice: min ? [`최소 주문 <b>${esc(minLabel(min))}</b>`] : [],
-      cfg: { pid: id, title: spec.title, date: spec.date, min, minLabel: min ? minLabel(min) : '', customer },
+      notice: [
+        ...(rule.minEach ? [`품종당 <b>${rule.minEach.toLocaleString('en-US')}주</b>부터`] : []),
+        ...(rule.minTotal ? [`총 <b>${rule.minTotal.toLocaleString('en-US')}주</b>부터 주문`] : []),
+        ...(min ? [`최소 주문 <b>${esc(minLabel(min))}</b>`] : []),
+      ],
+      cfg: { pid: id, title: spec.title, date: spec.date, min, minLabel: min ? minLabel(min) : '', customer, ...rule, search: items.length > 30 },
     });
     if (req.method === 'HEAD') { res.setHeader('Content-Type', 'text/html; charset=utf-8'); return res.status(200).end(); }
     return send(res, 200, html);
@@ -135,3 +150,4 @@ module.exports = async (req, res) => {
 
 module.exports.toItems = toItems;
 module.exports.toGroups = toGroups;
+module.exports.qtyRule = qtyRule;
