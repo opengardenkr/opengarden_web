@@ -56,6 +56,13 @@ module.exports = async (req, res) => {
 };
 module.exports.allowedImage = allowedImage;
 module.exports.watermark = watermark;
+// 외부 저작물(CC 사진)용: 로고 없이 크기만 줄인다
+async function resize(input, maxSize = 1600) {
+  return sharp(input, { limitInputPixels: 40000000 }).rotate()
+    .resize({ width: maxSize, height: maxSize, fit: 'inside', withoutEnlargement: true })
+    .flatten({ background: '#f4f6f1' }).webp({ quality: 84 }).toBuffer();
+}
+module.exports.resize = resize;
 module.exports.readImage = readImage;
 
 module.exports.WATERMARK = WATERMARK;

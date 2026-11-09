@@ -76,3 +76,26 @@ test('genus info card goes before 2+ varieties of the same genus, with stats and
   assert.match(html, /2품종 · 키 40~120cm · ₩3,900~₩4,500/);
   assert.match(html, /꽃관목<\/span><small>Shrubs · 1품종/); // 안내 카드는 품종 수에 안 들어감
 });
+
+test('photo order: hero first, farm display photo second, supplier after; credit only with hero', () => {
+  const { gallery } = require('../lib/hg-pool');
+  const sup1 = { id: 'attSSSSSSSSSSSSS1', filename: 'public' }, sup2 = { id: 'attSSSSSSSSSSSSS2', filename: 'public' };
+  const farm = { id: 'attFFFFFFFFFFFFF1', filename: 'HG26_0445_20261007_134924.jpg' };
+  const hero = { id: 'attHHHHHHHHHHHHH1', filename: "cc_Hydrangea 'Tovelit'.jpg" };
+  assert.deepEqual(gallery([hero], [sup1, farm, sup2]).map((a) => a.kind), ['hero', 'farm', 'sup', 'sup']);
+  assert.deepEqual(gallery([], [sup1, sup2, farm]).map((a) => a.id), [sup1.id, farm.id, sup2.id]); // 대표사진 없으면 매대 실사가 2번째
+  assert.deepEqual(gallery(null, [farm]).map((a) => a.kind), ['farm']);
+  const rec2 = rec('rec00000000000009', { [F.pool]: true, [F.sname]: "Hydrangea m. 'Tovelit'", [F.kname]: "수국 '토벨리트'", [F.size]: 'P9', [F.price]: 4500, [F.master]: [M1],
+    [F.hero]: [hero], [F.credit]: ['사진: A / Wikimedia Commons · CC BY-SA 4.0'], [F.photo]: [sup1, farm] });
+  const [it] = poolItems([rec2]);
+  assert.equal(it.img, `/api/order-photo?id=${M1}&w=800&v=${hero.id}`);
+  assert.deepEqual(it.gal, ['h.' + hero.id, 'f.' + farm.id, 's.' + sup1.id]);
+  assert.equal(it.credit, '사진: A / Wikimedia Commons · CC BY-SA 4.0');
+  const html = renderSections({ title: 't', groups: GROUPS, items: [it] }).sections;
+  assert.match(html, /data-g="h\.attHHHHHHHHHHHHH1 f\.attFFFFFFFFFFFFF1 s\.attSSSSSSSSSSSSS1"/);
+  assert.match(html, /data-cr="사진: A/);
+  assert.match(html, /class="c-ref">다 자란 모습/);
+  const [noHero] = poolItems([rec('rec0000000000000a', { ...rec2.fields, [F.hero]: [] })]);
+  assert.equal(noHero.credit, '');
+  assert.ok(!/c-ref/.test(renderSections({ title: 't', groups: GROUPS, items: [noHero] }).sections));
+});
