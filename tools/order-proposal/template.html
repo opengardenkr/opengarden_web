@@ -104,7 +104,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 .dbg{position:fixed;inset:0;z-index:42;background:rgba(17,24,20,.45);display:none}
 .dsheet{position:fixed;left:0;right:0;bottom:0;z-index:43;background:#fff;border-radius:18px 18px 0 0;max-height:90vh;overflow:auto;transform:translateY(105%);transition:transform .22s ease;padding:14px 0 calc(14px + env(safe-area-inset-bottom))}
 .dopen .dbg{display:block} .dopen .dsheet{transform:none} .dopen{overflow:hidden}
-.d-x{position:sticky;top:0;float:right;width:36px;height:36px;border:0;border-radius:50%;background:var(--soft);font-size:22px;color:var(--ink);z-index:2}
+.d-x{position:sticky;top:0;display:block;margin:0 6px -36px auto;width:36px;height:36px;border:0;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 1px 4px rgba(0,0,0,.18);font-size:22px;color:var(--ink);z-index:3}
 .d-photo{margin:4px 0 10px;border-radius:12px;overflow:hidden;background:var(--soft)}
 .d-photo img{width:100%;max-height:52vh;object-fit:cover;display:block}
 .d-gal{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -352,7 +352,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
         d.appendChild(row);
       } else { var im0 = new Image(); im0.alt = img.alt; im0.src = first; d.appendChild(im0); }
       b.appendChild(d);
-      if (img.dataset.cr) { var cr = document.createElement('p'); cr.className = 'd-cr'; cr.textContent = '대표사진 ' + img.dataset.cr; b.appendChild(cr); }
+      if (img.dataset.cr) { var cr = document.createElement('p'); cr.className = 'd-cr'; cr.textContent = '대표사진 출처 — ' + img.dataset.cr.replace(/^사진:\s*/, ''); b.appendChild(cr); }
     }
     ['.c-name', '.c-latin', '.chips', '.feat', '.c-note'].forEach(function(sel){ var n = c.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
     ['.opts', '.c-warn'].forEach(function(sel){ var n = c.querySelector(sel); if (!n) return; var ph = document.createComment(sel); n.parentNode.insertBefore(ph, n); n._ph = ph; b.appendChild(n); });
