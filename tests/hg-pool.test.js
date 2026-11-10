@@ -124,3 +124,30 @@ test('photo order: hero first, farm display photo second, supplier after; credit
   assert.equal(noHero.credit, '');
   assert.ok(!/c-ref/.test(renderSections({ title: 't', groups: GROUPS, items: [noHero] }).sections));
 });
+
+test('품절·품종별 최소·꽃색: 재고 합이 최소보다 적으면 품절, 최소는 카드에, 꽃색은 점으로', () => {
+  const { markSoldOut, card } = require('../lib/order-page');
+  const { colorsOf } = require('../lib/hg-pool');
+  assert.deepEqual(colorsOf(['7월 #F7F1DE, 8월 #edc0cc, 9월 bad, 10월 #be0053']), [{ m: '7월', c: '#f7f1de' }, { m: '8월', c: '#edc0cc' }, { m: '10월', c: '#be0053' }]);
+  const base = { k: 'h1', grp: '수국', name: "목수국 'A'", unit: '주', step: 40, rows: [['P9', 150, 4900, 0], ['P12', 30, 6500, 0]] };
+  const [a, b, c, d] = markSoldOut([base, { ...base, k: 'h2', rows: [['P9', 400, 4900, 0]] }, { ...base, k: 'h3', rows: [['P8', null, 6500, 0]], min: 1000 },
+    { ...base, k: 'h4', rows: [['P9', 900, 4900, 0]], min: 1000 }], 200);
+  assert.equal(a.soldOut, true);   // 150+30 < 200
+  assert.equal(b.soldOut, undefined);
+  assert.equal(c.soldOut, undefined); // 재고를 모르면 품절로 보지 않는다
+  assert.equal(d.soldOut, true);   // 품종별 최소 1,000 > 재고 900
+  const htmlA = card({ ...a, img: '/api/order-photo?id=recX&w=800', colors: [{ m: '7월', c: '#ffffff' }], h: [90, 100] });
+  assert.match(htmlA, /class="card sold"/);
+  assert.match(htmlA, /class="c-sold">품절/);
+  assert.match(htmlA, /<input [^>]*disabled>/);
+  assert.match(htmlA, /class="c-col"[^>]*><span><i style="background:#ffffff"><\/i><b>7월<\/b>/);
+  const htmlC = card({ ...c, colors: [{ m: '7월', c: 'red;x:1' }] });
+  assert.match(htmlC, /data-min="1000"/);
+  assert.match(htmlC, /1,000주부터/);
+  assert.doesNotMatch(htmlC, /c-col/); // 색 형식이 틀리면 그리지 않는다
+});
+
+test('수종 안내 카드는 단위 계산에서 빠진다(공동수입 주문서 단위 = 주)', () => {
+  const { unitOf } = require('../lib/order-page');
+  assert.equal(unitOf([{ kind: 'info', name: 'x' }, { unit: '주', rows: [['P9', 1, 1, 0]] }]), '주');
+});

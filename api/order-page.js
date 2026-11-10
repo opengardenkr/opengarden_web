@@ -4,7 +4,7 @@
 //   추측 불가 ID(22자), noindex + robots Disallow /o/, 사이트 어디에서도 링크하지 않음, 캐시 금지.
 // 고객이 보낸 주문은 기존 /api/quote → 견적요청 표로 간다.
 
-const { renderSections, renderPage, esc, unitOf } = require('../lib/order-page');
+const { renderSections, renderPage, esc, unitOf, markSoldOut } = require('../lib/order-page');
 const { GROUPS } = require('../lib/catalog-data');
 const pool = require('../lib/hg-pool');
 
@@ -119,8 +119,8 @@ module.exports = async (req, res) => {
     const raw = JSON.parse(f[F.items] || '{}');
     const isPool = raw && raw.v === 1 && raw.src === 'hg-pool';
     const rule = qtyRule(raw);
-    const items = (isPool ? await pool.loadPool() : toItems(f[F.items]))
-      .map((it) => (rule.step && it.kind !== 'info' ? { ...it, step: rule.step } : it));
+    const items = markSoldOut((isPool ? await pool.loadPool() : toItems(f[F.items]))
+      .map((it) => (rule.step && it.kind !== 'info' ? { ...it, step: rule.step } : it)), isPool ? rule.minEach : 0);
     if (!items.length) return send(res, 404, message('주문서를 찾을 수 없습니다', '담긴 품목이 없습니다.'));
     const iso = typeof f[F.date] === 'string' ? f[F.date] : '';
     const min = Number.isInteger(f[F.min]) && f[F.min] > 0 ? f[F.min] : 0;

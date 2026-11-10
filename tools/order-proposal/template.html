@@ -126,6 +126,30 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 .card.short{box-shadow:0 0 0 2px var(--warn) inset}
 .srch{margin:0 0 14px}.srch input{width:100%;box-sizing:border-box;height:44px;border:1px solid var(--line);border-radius:12px;padding:0 14px;font-size:15px;background:#fff}
 .srch-none{color:var(--gray);font-size:14px;text-align:center;margin:18px 0}
+/* 키·꽃색 한 줄(리빙 시리즈 제안서 카드처럼) — 목록에서는 점만, 상세에서는 월까지 */
+.c-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:6px;font-size:12px;color:#3f4a3c;font-weight:600}
+.c-h::before{content:'↕ ';color:var(--gray);font-weight:500}
+.c-col{display:inline-flex;align-items:center;gap:3px}
+.c-col span{display:inline-flex;align-items:center;gap:3px}
+.c-col i{width:12px;height:12px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18);display:inline-block}
+.c-col b{font-size:11px;font-weight:600;color:var(--gray)}
+.c-col em{font-style:normal;color:#b5bdb1;font-size:11px}
+.compact .card .c-col b,.compact .card .c-col em{display:none}
+.c-minq{font-size:11px;font-weight:800;color:var(--gold)}
+.chip.min{border-color:#E3B865;color:var(--gold);background:#FDF4E2}
+#dBody .c-meta{font-size:13px;margin-top:8px}
+#dBody .c-meta .c-h,#dBody .c-meta .c-minq{display:none}
+#dBody .c-col i{width:16px;height:16px}
+#dBody .c-col b{font-size:12px}
+/* 품절: 카드는 그대로 두고 사진을 어둡게 흐리고 '품절' 표시, 수량 입력은 막는다 */
+.c-sold{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800;letter-spacing:.06em;pointer-events:none}
+.c-sold small{font-size:10.5px;font-weight:700;letter-spacing:.2em;opacity:.85;margin-top:2px}
+.card.sold .c-photo img{filter:blur(3px) brightness(.42) saturate(.6);transform:scale(1.06)}
+.card.sold .c-name,.card.sold .c-mini b{color:#8a928c}
+.badge.sold{background:#2b2f2c;color:#fff}
+.c-soldline{font-size:12px;font-weight:800;color:#fff;background:#2b2f2c;border-radius:6px;padding:2px 8px;align-self:flex-start;margin-top:4px}
+.opt.sold{opacity:.45}
+.opt.sold .st-btn,.opt.sold input{cursor:not-allowed}
 .prog-txt.bad{color:var(--warn)}
 .terms{margin:26px 0 8px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px}
 .terms h2{font-size:16px;font-weight:800;color:var(--green);margin-bottom:8px}
@@ -292,12 +316,14 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
       o.querySelector('.minus').addEventListener('click', function(){
         var n = qtyOf(o) - stepOf(o);
         // 단위 규칙(첫 200, 추가 40…)이 있으면 품종 최소 아래로 내려갈 때 이 규격 줄을 비운다
-        if (CFG.step && CFG.minEach && !o.dataset.pack && cardQty(o) - stepOf(o) < CFG.minEach) n = 0;
+        var mn = minOf(cardOf(o));
+        if (CFG.step && mn && !o.dataset.pack && cardQty(o) - stepOf(o) < mn) n = 0;
         setQty(o, n); update();
       });
       o.querySelector('.plus').addEventListener('click', function(){
         var n = qtyOf(o) + stepOf(o);
-        if (CFG.minEach && !o.dataset.pack && cardQty(o) === 0) n = CFG.minEach;
+        var mn = minOf(cardOf(o));
+        if (mn && !o.dataset.pack && cardQty(o) === 0) n = mn;
         setQty(o, n); update();
       });
       inp.addEventListener('input', function(){ o.classList.toggle('on', qtyOf(o) > 0); update(); });
@@ -316,6 +342,9 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
       .reduce(function(s, x){ var p = parseInt(x.dataset.pack, 10) || 0; return s + (p ? qtyOf(x) * p : qtyOf(x)); }, 0);
   }
   function cardQty(o){ return keyQty(o.dataset.id.split('|')[0]); }
+  // 품종 최소 수량: 카드에 따로 적힌 값(예: 1,000주) → 없으면 주문서 기본(minEach)
+  function cardOf(o){ return document.getElementById('i-' + o.dataset.id.split('|')[0]); }
+  function minOf(c){ return (c && parseInt(c.dataset.min, 10)) || CFG.minEach || 0; }
   function minPrice(c){
     var ps = [].slice.call(c.querySelectorAll('.opt')).map(function(o){ return +o.dataset.price || 0; }).filter(Boolean);
     return ps.length ? '₩' + fmt(Math.min.apply(null, ps)) + (ps.length > 1 ? '~' : '') : '';
@@ -373,7 +402,8 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
       });
       b.appendChild(d);
     }
-    ['.c-name', '.c-latin', '.chips', '.feat', '.c-note'].forEach(function(sel){ var n = c.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
+    ['.c-name', '.c-latin', '.c-meta', '.chips', '.feat', '.c-note'].forEach(function(sel){ var n = c.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
+    if (c.classList.contains('sold')) { var sl = document.createElement('p'); sl.className = 'c-warn sold-note'; sl.textContent = '품절 — 이번 회차에는 주문할 수 없습니다'; b.appendChild(sl); }
     ['.opts', '.c-warn'].forEach(function(sel){ var n = c.querySelector(sel); if (!n) return; var ph = document.createComment(sel); n.parentNode.insertBefore(ph, n); n._ph = ph; b.appendChild(n); });
     dCard = c; $('dOk').textContent = '담기 완료';
     document.body.classList.add('dopen');
@@ -418,7 +448,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
     var w = o.querySelector('.o-warn'), u = unitOf(o), msg = '';
     // CFG.step(예: 40)이 있으면 규격 줄 수량은 그 배수만 — 손으로 넣은 수는 위로 맞추고, 재고를 넘으면 재고 안의 배수로
     var s = CFG.step && !o.dataset.pack ? stepOf(o) : 0, top = max ? (s ? Math.floor(max / s) * s : max) : 0;
-    q = Math.max(0, Math.round(q) || 0);
+    q = o.classList.contains('sold') ? 0 : Math.max(0, Math.round(q) || 0);
     if (s && q % s) { q = Math.ceil(q / s) * s; msg = fmt(s) + u + ' 단위로 맞췄습니다 (' + fmt(q) + u + ')'; }
     if (max && q > max) { q = top; msg = '재고 ' + fmt(max) + u + (s && top !== max ? ' — ' + fmt(s) + u + ' 단위로 ' + fmt(top) + u + '까지 가능합니다' : '까지 가능합니다'); }
     w.textContent = msg; w.hidden = !msg;
@@ -441,12 +471,14 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
     var t = $('progT');
     // 수량 규칙: 품종당 최소(minEach) · 전체 최소(minTotal)
     var short = 0, qty = list.reduce(function(s,i){ return s + i.bulbs; }, 0);
-    if (CFG.minEach) {
+    var anyMin = CFG.minEach || document.querySelector('.card[data-min]');
+    if (anyMin) {
       [].slice.call(document.querySelectorAll('.card:not(.info)')).forEach(function(c){
-        var q = keyQty(c.dataset.k), w = c.querySelector('.c-warn') || (dCard === c ? $('dBody').querySelector('.c-warn') : null);
-        var bad = q > 0 && q < CFG.minEach; if (bad) short++;
+        var mn = minOf(c); if (!mn) return;
+        var q = keyQty(c.dataset.k), w = c.querySelector('.c-warn') || (dCard === c ? $('dBody').querySelector('.c-warn:not(.sold-note)') : null);
+        var bad = q > 0 && q < mn; if (bad) short++;
         c.classList.toggle('short', bad);
-        if (w) { w.hidden = !bad; w.textContent = bad ? '품종당 ' + fmt(CFG.minEach) + CFG.unit + '부터 주문할 수 있습니다 (지금 ' + fmt(q) + CFG.unit + ')' : ''; }
+        if (w) { w.hidden = !bad; w.textContent = bad ? (c.dataset.min ? '이 품종은 ' : '품종당 ') + fmt(mn) + CFG.unit + '부터 주문할 수 있습니다 (지금 ' + fmt(q) + CFG.unit + ')' : ''; }
       });
     }
     if (CFG.compact) [].slice.call(document.querySelectorAll('.card:not(.info)')).forEach(function(c){
@@ -456,7 +488,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
     if (CFG.minTotal || CFG.minEach) {
       $('prog').hidden = !CFG.minTotal; t.hidden = false;
       if (CFG.minTotal) $('progI').style.width = (Math.min(1, qty / CFG.minTotal) * 100) + '%';
-      if (short) { t.textContent = '최소 수량이 안 된 품종 ' + short + '개 — 품종당 ' + fmt(CFG.minEach) + CFG.unit + '부터'; t.className = 'prog-txt bad'; }
+      if (short) { t.textContent = '최소 수량이 안 된 품종 ' + short + '개' + (CFG.minEach ? ' — 품종당 ' + fmt(CFG.minEach) + CFG.unit + '부터' : ''); t.className = 'prog-txt bad'; }
       else if (CFG.minTotal && qty < CFG.minTotal) { t.textContent = '총 ' + fmt(CFG.minTotal) + CFG.unit + '부터 주문 — ' + fmt(CFG.minTotal - qty) + CFG.unit + ' 남음'; t.className = 'prog-txt'; }
       else if (CFG.minTotal) { t.textContent = '최소 주문 수량(' + fmt(CFG.minTotal) + CFG.unit + ')을 충족했습니다'; t.className = 'prog-txt ok'; }
       else { t.textContent = ''; t.hidden = true; }
@@ -467,7 +499,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
       if (total >= CFG.min) { t.textContent = '최소 주문 금액(' + CFG.minLabel + ')을 충족했습니다'; t.className = 'prog-txt ok'; }
       else { t.textContent = '최소 주문 ' + CFG.minLabel + '까지 ₩' + fmt(CFG.min - total) + ' 남음'; t.className = 'prog-txt'; }
     }
-    $('go').disabled = list.length === 0 || ((CFG.minEach || CFG.minTotal) && (short > 0 || (CFG.minTotal && qty < CFG.minTotal)));
+    $('go').disabled = list.length === 0 || short > 0 || (CFG.minTotal && qty < CFG.minTotal);
     var s = {}; list.forEach(function(i){ s[i.id] = i.qty; });
     try { localStorage.setItem(KEY, JSON.stringify(s)); } catch(e) {}
     return { list:list, total:total };
