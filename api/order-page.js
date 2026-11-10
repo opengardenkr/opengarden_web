@@ -137,8 +137,9 @@ module.exports = async (req, res) => {
         ...(rule.minEach ? [`품종당 <b>${rule.minEach.toLocaleString('en-US')}주</b>부터`] : []),
         ...(rule.minTotal ? [`총 <b>${rule.minTotal.toLocaleString('en-US')}주</b>부터 주문`] : []),
         ...(min ? [`최소 주문 <b>${esc(minLabel(min))}</b>`] : []),
+        ...(isPool ? ['대표사진은 다 자란 모습(참고) · 출하는 포트 묘'] : []),
       ],
-      cfg: { pid: id, title: spec.title, date: spec.date, min, minLabel: min ? minLabel(min) : '', customer, ...rule, search: items.length > 30 },
+      cfg: { pid: id, title: spec.title, date: spec.date, min, minLabel: min ? minLabel(min) : '', customer, ...rule, search: items.length > 30, compact: isPool },
     });
     if (req.method === 'HEAD') { res.setHeader('Content-Type', 'text/html; charset=utf-8'); return res.status(200).end(); }
     return send(res, 200, html);
