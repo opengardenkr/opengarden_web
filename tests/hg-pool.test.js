@@ -46,6 +46,31 @@ test('groups and latin clean-up', () => {
 test('quantity rule only accepts positive integers', () => {
   assert.deepEqual(qtyRule({ minEach: 200, minTotal: 600 }), { minEach: 200, minTotal: 600 });
   assert.deepEqual(qtyRule({ minEach: '200', minTotal: -1 }), { minEach: 0, minTotal: 0 });
+  assert.deepEqual(qtyRule({ minEach: 200, minTotal: 600, step: 40 }), { minEach: 200, minTotal: 600, step: 40 });
+  assert.deepEqual(qtyRule({ minEach: 200, step: 0.5 }), { minEach: 200, minTotal: 0 });
+});
+
+test('주문서 묶음 PBR moves whole cards into the PBR tab; 주문서 정렬 places a card; P8 sorts first', () => {
+  const r = (id, latin, kname, size, extra) => ({ id, fields: { [F.pool]: true, [F.sname]: latin, [F.kname]: kname, [F.size]: size, [F.price]: 4900, [F.master]: ['recM' + id.slice(4)], ...extra } });
+  const recs = [
+    r('rec000000000000a1', "Hydrangea pan. Living 'Infinity'® NEW", "목수국 '리빙 인피니티'", 'P9', { [F.bundle]: 'PBR' }),
+    r('rec000000000000a2', "Hydrangea pan. 'Diamant Rouge'", "목수국 '디아망 루즈'", 'P9', {}),
+    r('rec000000000000a3', "Hydrangea pan. 'Framboisine'", "목수국 '프랑부아진'", 'P8', { [F.sortKey]: "목수국 '디아망 루즈' 2" }),
+    r('rec000000000000a4', "Hydrangea pan. 'Bobo'", "목수국 '보보'", 'P9', {}),
+    r('rec000000000000a5', "Weigela 'Spirit' PBR", "병꽃나무 '스피릿'", 'P9', { [F.bundle]: { name: 'PBR' } }),
+  ];
+  // 같은 품종의 두 번째 규격 줄이 묶음이 아니면 카드는 속 분류에 남는다
+  recs.push({ id: 'rec000000000000a6', fields: { ...recs[4].fields, [F.size]: 'P12' } });
+  recs[5].fields[F.bundle] = undefined;
+  recs.push({ id: 'rec000000000000a7', fields: { ...recs[2].fields, [F.size]: 'P9' } });
+  const items = poolItems(recs).filter((x) => x.kind !== 'info');
+  assert.equal(items.find((x) => /인피니티/.test(x.name)).grp, 'PBR 품종');
+  assert.equal(items.find((x) => /스피릿/.test(x.name)).grp, '꽃관목');
+  const hyd = items.filter((x) => x.grp === '수국').map((x) => x.name);
+  assert.deepEqual(hyd, ["목수국 '디아망 루즈'", "목수국 '프랑부아진'", "목수국 '보보'"]);
+  assert.deepEqual(items.find((x) => /프랑부아진/.test(x.name)).rows.map((x) => x[0]), ['P8', 'P9']);
+  assert.ok(items.every((x) => !('sort' in x) && !('bundle' in x)));
+  assert.equal(GROUPS[1][0], 'PBR 품종');
 });
 
 // 브라우저 로직: 품종당 200주 · 총 600주 미만이면 요청 버튼이 잠긴다
