@@ -76,10 +76,16 @@ function toItems(raw) {
   }).filter((it) => it.name && it.rows.length);
 }
 
-/** 수량 규칙(선택): minEach = 품종(카드)당 최소 수량, minTotal = 주문 전체 최소 수량. 단위는 품목 단위(주·구). */
+/**
+ * 수량 규칙(선택): minEach = 품종(카드)당 최소 수량, minTotal = 주문 전체 최소 수량,
+ * step = 규격 줄마다 이 단위로만(예: 박스당 40주 → 200·240·280…). 단위는 품목 단위(주·구).
+ */
 function qtyRule(data) {
-  const n = (v) => (Number.isInteger(v) && v > 0 && v <= 1000000 ? v : 0);
-  return { minEach: n(data && data.minEach), minTotal: n(data && data.minTotal) };
+  const n = (v, max) => (Number.isInteger(v) && v > 0 && v <= max ? v : 0);
+  const rule = { minEach: n(data && data.minEach, 1000000), minTotal: n(data && data.minTotal, 1000000) };
+  const step = n(data && data.step, 10000);
+  if (step) rule.step = step;
+  return rule;
 }
 
 /** 품목JSON의 groups(선택) = [[표시명, 영문]] — 묶음 순서·영문 소제목 */
@@ -112,8 +118,9 @@ module.exports = async (req, res) => {
     // 공동수입 주문서: 품목JSON = {"v":1,"src":"hg-pool","minEach":200,"minTotal":600} — 품목은 호게나르드 DM에서 바로 읽는다
     const raw = JSON.parse(f[F.items] || '{}');
     const isPool = raw && raw.v === 1 && raw.src === 'hg-pool';
-    const items = isPool ? await pool.loadPool() : toItems(f[F.items]);
     const rule = qtyRule(raw);
+    const items = (isPool ? await pool.loadPool() : toItems(f[F.items]))
+      .map((it) => (rule.step && it.kind !== 'info' ? { ...it, step: rule.step } : it));
     if (!items.length) return send(res, 404, message('주문서를 찾을 수 없습니다', '담긴 품목이 없습니다.'));
     const iso = typeof f[F.date] === 'string' ? f[F.date] : '';
     const min = Number.isInteger(f[F.min]) && f[F.min] > 0 ? f[F.min] : 0;
@@ -134,7 +141,8 @@ module.exports = async (req, res) => {
       ogImage: `${SITE}/assets/og-order.jpg`, ogDim: true,
       secure: sections, terms,
       notice: [
-        ...(rule.minEach ? [`품종당 <b>${rule.minEach.toLocaleString('en-US')}주</b>부터`] : []),
+        ...(rule.minEach ? [`품종당 <b>${rule.minEach.toLocaleString('en-US')}주</b>부터${rule.step ? ` · 추가는 <b>${rule.step.toLocaleString('en-US')}주</b> 단위` : ''}`] : []),
+        ...(!rule.minEach && rule.step ? [`<b>${rule.step.toLocaleString('en-US')}주</b> 단위로 주문`] : []),
         ...(rule.minTotal ? [`총 <b>${rule.minTotal.toLocaleString('en-US')}주</b>부터 주문`] : []),
         ...(min ? [`최소 주문 <b>${esc(minLabel(min))}</b>`] : []),
         ...(isPool ? ['대표사진은 다 자란 모습(참고) · 출하는 포트 묘'] : []),

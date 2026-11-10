@@ -289,7 +289,12 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
       var inp = o.querySelector('input');
       var all = o.querySelector('.all');
       if (all) all.addEventListener('click', function(){ setQty(o, parseInt(o.dataset.max, 10)); update(); });
-      o.querySelector('.minus').addEventListener('click', function(){ setQty(o, qtyOf(o) - stepOf(o)); update(); });
+      o.querySelector('.minus').addEventListener('click', function(){
+        var n = qtyOf(o) - stepOf(o);
+        // 단위 규칙(첫 200, 추가 40…)이 있으면 품종 최소 아래로 내려갈 때 이 규격 줄을 비운다
+        if (CFG.step && CFG.minEach && !o.dataset.pack && cardQty(o) - stepOf(o) < CFG.minEach) n = 0;
+        setQty(o, n); update();
+      });
       o.querySelector('.plus').addEventListener('click', function(){
         var n = qtyOf(o) + stepOf(o);
         if (CFG.minEach && !o.dataset.pack && cardQty(o) === 0) n = CFG.minEach;
@@ -378,7 +383,8 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
     var b = $('dBody'); b.innerHTML = '';
     ['.c-name', '.c-latin', '.feat', '.i-stat'].forEach(function(sel){ var n = info.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
     var ul = document.createElement('ul'); ul.className = 'cmp';
-    [].slice.call(document.querySelectorAll('.card:not(.info)')).filter(function(c){ return c.dataset.genus === info.dataset.genus; }).forEach(function(c){
+    // 같은 묶음(탭) 안의 같은 수종만 — PBR 묶음의 목수국과 수국 묶음의 목수국은 따로 비교
+    [].slice.call(document.querySelectorAll('.card:not(.info)')).filter(function(c){ return c.dataset.genus === info.dataset.genus && c.closest('section') === info.closest('section'); }).forEach(function(c){
       var li = document.createElement('li'), f = c.querySelector('.feat li'), h = [].slice.call(c.querySelectorAll('.chip')).map(function(x){ return x.textContent; }).join(' · ');
       [['n', (c.querySelector('.c-name') || {}).textContent || ''], ['p', minPrice(c)], ['s', [h, f ? f.textContent : ''].filter(Boolean).join(' · ')]].forEach(function(x){ var sp = document.createElement('span'); sp.className = x[0]; sp.textContent = x[1]; li.appendChild(sp); });
       li.addEventListener('click', function(){ openCard(c); });
@@ -409,13 +415,16 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
   function qtyOf(o){ return Math.max(0, parseInt(o.querySelector('input').value, 10) || 0); }
   function setQty(o, q){
     var max = parseInt(o.dataset.max, 10);
-    var w = o.querySelector('.o-warn');
+    var w = o.querySelector('.o-warn'), u = unitOf(o), msg = '';
+    // CFG.step(예: 40)이 있으면 규격 줄 수량은 그 배수만 — 손으로 넣은 수는 위로 맞추고, 재고를 넘으면 재고 안의 배수로
+    var s = CFG.step && !o.dataset.pack ? stepOf(o) : 0, top = max ? (s ? Math.floor(max / s) * s : max) : 0;
     q = Math.max(0, Math.round(q) || 0);
-    if (max && q > max) { q = max; w.textContent = '재고 ' + fmt(max) + unitOf(o) + '까지 가능합니다'; w.hidden = false; }
-    else w.hidden = true;
+    if (s && q % s) { q = Math.ceil(q / s) * s; msg = fmt(s) + u + ' 단위로 맞췄습니다 (' + fmt(q) + u + ')'; }
+    if (max && q > max) { q = top; msg = '재고 ' + fmt(max) + u + (s && top !== max ? ' — ' + fmt(s) + u + ' 단위로 ' + fmt(top) + u + '까지 가능합니다' : '까지 가능합니다'); }
+    w.textContent = msg; w.hidden = !msg;
     o.querySelector('input').value = q;
     o.classList.toggle('on', q > 0);
-    var a = o.querySelector('.all'); if (a) a.classList.toggle('on', !!max && q === max);
+    var a = o.querySelector('.all'); if (a) a.classList.toggle('on', !!top && q === top);
   }
   function picked(){
     return opts.filter(function(o){ return qtyOf(o) > 0; }).map(function(o){
