@@ -107,12 +107,13 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 .d-x{position:sticky;top:0;display:block;margin:0 6px -36px auto;width:36px;height:36px;border:0;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 1px 4px rgba(0,0,0,.18);font-size:22px;color:var(--ink);z-index:3}
 .d-photo{margin:4px 0 10px;border-radius:12px;overflow:hidden;background:var(--soft)}
 .d-photo img{width:100%;max-height:52vh;object-fit:cover;display:block}
-.d-gal{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.d-gal::-webkit-scrollbar{display:none}
-.d-gal figure{flex:0 0 100%;scroll-snap-align:center;position:relative;margin:0}
-.d-gal img{height:52vh;max-height:440px;background:var(--soft)}
-.d-gal figcaption{position:absolute;left:8px;bottom:8px;background:rgba(17,24,20,.62);color:#fff;font-size:12px;font-weight:600;padding:2px 9px;border-radius:10px}
-.d-cr{font-size:11px;color:var(--gray);margin:-4px 0 8px;word-break:break-all}
+.d-photo:has(.d-tabs){overflow:visible;background:none;border-radius:0}
+.d-tabs{display:flex;gap:6px;margin:0 48px 8px 0}
+.d-tabs button{flex:0 0 auto;border:1px solid var(--line,#dfe5dc);background:#fff;color:var(--ink);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;font-weight:700}
+.d-tabs button.on{background:var(--green);border-color:var(--green);color:#fff}
+.d-pane img{width:100%;height:auto;max-height:72vh;object-fit:contain;display:block;background:var(--soft);border-radius:12px}
+.d-pane img+img{margin-top:8px}
+.d-cap{font-size:11.5px;color:var(--gray);margin:6px 2px 4px;word-break:break-all}
 .c-photo{position:relative}
 .c-ref{position:absolute;left:6px;bottom:6px;font-size:10.5px;font-weight:600;background:rgba(17,24,20,.55);color:#fff;border-radius:8px;padding:1px 6px;pointer-events:none}
 #dBody .c-name{font-size:20px}
@@ -337,22 +338,35 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
     var b = $('dBody'); b.innerHTML = '';
     var img = c.querySelector('.c-photo img');
     if (img) {
-      // 사진 넘겨보기: 대표사진(다 자란 모습) → 현지 매대 실사(출하 묘) → 공급사 사진
-      var d = document.createElement('div'); d.className = 'd-photo';
+      // 사진 두 칸: [대표사진] 다 자란 모습 / [농장 실사] 현지 매대의 출하 묘 — 눌러서 바꿔 보고, 사진은 자르지 않고 원본 비율 그대로
       var g = (img.dataset.g || '').split(' ').filter(Boolean), first = img.dataset.big || img.src, base = first.replace(/&v=[^&]*/, '');
-      var LB = { h: '다 자란 모습 (참고 사진)', f: '현지 농장 실물 · 출하 묘', s: '공급사 사진' };
-      if (g.length) {
-        var row = document.createElement('div'); row.className = 'd-gal';
-        g.forEach(function(x, i){
-          var k = x.split('.')[0], a = x.split('.')[1], fig = document.createElement('figure'), im = new Image(), cap = document.createElement('figcaption');
-          im.alt = img.alt; im.decoding = 'async'; im.src = i ? base + '&a=' + a + '&v=' + a : first;
-          cap.textContent = (g.length > 1 ? (i + 1) + '/' + g.length + ' · ' : '') + (LB[k] || '');
-          fig.appendChild(im); fig.appendChild(cap); row.appendChild(fig);
+      var all = g.length ? g.map(function(x, i){ var a = x.split('.')[1]; return { k: x.split('.')[0], u: i ? base + '&a=' + a + '&v=' + a : first }; }) : [{ k: 's', u: first }];
+      var by = function(k){ return all.filter(function(x){ return x.k === k; }); };
+      var hero = by('h'), farm = by('f'), sup = by('s');
+      var top = hero.length ? hero : sup.slice(0, 1), real = farm.length ? farm : (hero.length ? sup : sup.slice(1));
+      var panes = [];
+      if (top.length) panes.push({ t: hero.length ? '대표사진' : '공급사 사진', s: hero.length ? '다 자란 모습 · 참고' : '', list: top, cr: hero.length ? img.dataset.cr : '' });
+      if (real.length) panes.push({ t: farm.length ? '농장 실사' : '실물 사진', s: farm.length ? '현지 매대 · 출하 묘' : '공급사 사진', list: real });
+      var d = document.createElement('div'); d.className = 'd-photo';
+      if (panes.length > 1) {
+        var tabs = document.createElement('div'); tabs.className = 'd-tabs';
+        panes.forEach(function(p, i){ var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = p.t; if (!i) bt.className = 'on'; bt.dataset.i = i; tabs.appendChild(bt); });
+        tabs.addEventListener('click', function(e){
+          var bt = e.target.closest('button'); if (!bt) return;
+          [].forEach.call(tabs.children, function(x){ x.classList.toggle('on', x === bt); });
+          [].forEach.call(d.querySelectorAll('.d-pane'), function(p, i){ p.hidden = String(i) !== bt.dataset.i; });
         });
-        d.appendChild(row);
-      } else { var im0 = new Image(); im0.alt = img.alt; im0.src = first; d.appendChild(im0); }
+        d.appendChild(tabs);
+      }
+      panes.forEach(function(p, i){
+        var pane = document.createElement('div'); pane.className = 'd-pane'; pane.hidden = i > 0;
+        p.list.forEach(function(x){ var im = new Image(); im.alt = img.alt + ' ' + p.t; im.decoding = 'async'; if (i) im.loading = 'lazy'; im.src = x.u; pane.appendChild(im); });
+        var cap = document.createElement('p'); cap.className = 'd-cap';
+        cap.textContent = p.s + (p.cr ? (p.s ? ' · ' : '') + '출처 ' + p.cr.replace(/^사진:\s*/, '') : '');
+        if (cap.textContent) pane.appendChild(cap);
+        d.appendChild(pane);
+      });
       b.appendChild(d);
-      if (img.dataset.cr) { var cr = document.createElement('p'); cr.className = 'd-cr'; cr.textContent = '대표사진 출처 — ' + img.dataset.cr.replace(/^사진:\s*/, ''); b.appendChild(cr); }
     }
     ['.c-name', '.c-latin', '.chips', '.feat', '.c-note'].forEach(function(sel){ var n = c.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
     ['.opts', '.c-warn'].forEach(function(sel){ var n = c.querySelector(sel); if (!n) return; var ph = document.createComment(sel); n.parentNode.insertBefore(ph, n); n._ph = ph; b.appendChild(n); });
