@@ -146,3 +146,8 @@ test('품절·품종별 최소·꽃색: 재고 합이 최소보다 적으면 품
   assert.match(htmlC, /1,000주부터/);
   assert.doesNotMatch(htmlC, /c-col/); // 색 형식이 틀리면 그리지 않는다
 });
+
+test('수종 안내 카드는 단위 계산에서 빠진다(공동수입 주문서 단위 = 주)', () => {
+  const { unitOf } = require('../lib/order-page');
+  assert.equal(unitOf([{ kind: 'info', name: 'x' }, { unit: '주', rows: [['P9', 1, 1, 0]] }]), '주');
+});
