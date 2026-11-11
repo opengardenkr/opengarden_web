@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
     } catch (e) {
       const why = String(e.message || e).slice(0, 120);
       try {
-        const r = await sendAlimtalk({ to: phone, templateId: RECEIPT_TEMPLATE(), variables: receiptVars({ no: ok.reqNo, name, summary: doc.str(of[R.summary]) }) });
+        const r = await sendAlimtalk({ to: phone, templateId: RECEIPT_TEMPLATE(), variables: receiptVars({ no: ok.reqNo, name, summary: doc.issueVars(v, { name, key })['#{품목요약}'] }) });
         result = r.skipped ? `실패 · ${why}` : `견적서발행 실패 → 접수확인 알림톡으로 대신 보냄 · ${why}`;
       } catch (e2) {
         result = `실패 · ${why} / 접수확인도 실패 · ${String(e2.message || e2).slice(0, 80)}`;

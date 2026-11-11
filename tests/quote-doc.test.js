@@ -133,6 +133,7 @@ test('quote-issue falls back to the receipt alimtalk while the quote template is
       assert.match(last[Q.sentResult], /접수확인 알림톡으로 대신 보냄/);
       const receipt = calls.filter((c) => c.url.hostname === 'api.solapi.com')[1].body.message.kakaoOptions.variables;
       assert.equal(receipt['#{요청번호}'], 'Q-20261111-ABC');
+      assert.match(receipt['#{품목요약}'], /^1\. 목수국 라임라이트 \(P9\) 200주$/m); // '@₩단가 = ₩금액 · 200개' 대신 깔끔한 줄
     });
   } finally { delete process.env.SOLAPI_API_KEY; delete process.env.SOLAPI_API_SECRET; delete process.env.SOLAPI_PFID; delete process.env.SOLAPI_TEMPLATE_ID; }
 });
