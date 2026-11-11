@@ -11,6 +11,8 @@ const { qualifyInquiry } = require('../lib/inquiry');
 const BASE = process.env.AIRTABLE_BASE_ID;
 const QTABLE = process.env.AIRTABLE_QUOTE_TABLE || '견적요청';
 const TOKEN = process.env.AIRTABLE_TOKEN;
+// 주문서 템플릿(tools/order-proposal/template.html)이 요청사항 첫머리에 붙이는 표시: '[주문 링크 <ID>] ' 또는 '[제안서 <ID>] '
+const ORDER_MEMO = /^\[(?:주문 링크|제안서) [A-Za-z0-9_-]{6,64}\] /;
 
 // ── 솔라피 알림톡: 접수 확인 메시지를 고객 폰으로 발송 ──
 // 환경변수(SOLAPI_*)가 하나라도 없으면 조용히 건너뜀 → 미설정 상태에서도 접수는 정상 동작.
@@ -90,7 +92,10 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: '연락처를 확인해주세요.' });
     }
 
-    const qualification = qualifyInquiry(req.body);
+    // 주문 링크(/o/)·주문형 제안서(/p/)의 주문은 품목·단가가 정해진 고객 전용 주문서라 사업자 확인 문항(거래 유형·예산·시기)이 없다.
+    // 그 문항은 웹 카탈로그 문의에만 묻는다. (2026-11-04 도입 때 주문서 접수까지 막혀 2026-11-11 고침)
+    const fromOrder = typeof memo === 'string' && ORDER_MEMO.test(memo) && items.length > 0;
+    const qualification = fromOrder ? { memo: memo.trim().slice(0, 1000) } : qualifyInquiry(req.body);
     if (qualification.error) return res.status(400).json({ error: qualification.error });
 
     // 입력값 정리 (길이 제한 + 수량 범위 강제)
