@@ -17,6 +17,7 @@ public/
 api/
   catalog.js      GET  /api/catalog?group=immediate|preorder — 국내/판매 라인업 읽기
   quote.js        POST /api/quote — 견적요청 기록 + 요청번호(Q-YYYYMMDD-XXX) 발급
+  quote-issue.js  POST /api/quote-issue — 자동 초안을 고객에게 발행(알림톡) · quote-view.js GET /q/<키> · quote-reply.js 고객 확정/수정 요청
 docs/             아키텍처·구조·인수인계 문서 + 사용자 플로우 다이어그램 (작업 전 필독)
 dev.js            로컬 미리보기 서버 (`npm run dev` → localhost:3000, 의존성 0)
 .env.example      로컬용 환경변수 견본 — .env로 복사해 사용 (.env는 커밋 금지)
@@ -44,6 +45,13 @@ dev.js            로컬 미리보기 서버 (`npm run dev` → localhost:3000, 
 > **주문 링크 `/o/<22자 ID>` (2026-10-30 사용자 승인)**: ERP '주문' 화면에서 품목을 골라 만드는 고객 링크.
 > 원본은 에어테이블 `[영업] 주문 링크`(tbl93mrTsG1IsuFxQ), `api/order-page.js`가 요청마다 읽어 그린다(캐시 금지).
 > 같은 조건: 추측 불가 ID, noindex + robots `Disallow: /o/`, 사이트에서 링크하지 않음. 상태 '마감'이면 닫힌다.
+> **자동 발행 견적서 `/q/<22자 키>` (2026-11-11 사용자 승인: "견적 요청 들어오면 견적서 자동발행까지")**:
+> 주문 링크·제안서 주문 → 에어테이블 자동화가 견적서 초안(OG번호, 상태 '작성')을 만든다 → 자동화 '견적서 자동 발행 → 고객 알림톡'이
+> `POST /api/quote-issue {id}` → 고객링크키 발급 + 솔라피 알림톡 '견적서발행'(KA01TP2611111406219602fDBDCJiYei, 버튼 /q/<키>) → 상태 '발송'.
+> 그 템플릿이 실패하면(심사 중 등) '견적접수확인'으로 대신 보내고 상태는 '작성'. 카탈로그 문의·단가 미정 품목이 있는 주문은 보내지 않는다.
+> 고객이 /q/에서 [확정]·[수정 요청] → `POST /api/quote-reply` → 견적에 고객응답·고객응답일시·고객응답내용(확정이면 상태 '수락')
+> → 자동화 '견적 고객 응답 → 대표 카톡'(Make 메일훅 → 대표 번호만). 한 링크는 같은 견적 묶음에서 '보낸' 최신 수정본(-R2…)을 보여 준다.
+> 같은 조건: 추측 불가 키, noindex + robots `Disallow: /q/`, 캐시 금지, 사이트에서 링크하지 않음. 공급자 주소는 페이지에 싣지 않는다.
 
 ## 기술 결정사항
 
