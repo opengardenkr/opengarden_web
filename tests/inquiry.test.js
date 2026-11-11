@@ -56,3 +56,32 @@ test('inquiry without catalog items saves the message and rejects empty requests
     assert.equal(fields, undefined);
   } finally { global.fetch = original; }
 });
+test('order link and proposal orders are accepted without catalog qualification questions', async () => {
+  const original = global.fetch;
+  const sent = [];
+  global.fetch = async (url, options) => {
+    assert.equal(new URL(url).hostname, 'api.airtable.com');
+    sent.push(JSON.parse(options.body).records[0].fields);
+    return { ok: true };
+  };
+  try {
+    for (const memo of ['[주문 링크 h5IMKFPxIbES6Ci6KzPgeP] 호게나르드 공동수입 (2026. 11. 6)\n합계 ₩1,000,000 (VAT 별도)', '[제안서 abc-1234-xyz] 항공 구근 (2026. 11. 1)\n합계 ₩500 (VAT 별도)']) {
+      let status, result;
+      const body = { name: '금성농원', phone: '010-1234-5678', memo, agree: true, marketing: false, website: '', items: [{ sku: 'x:1', kname: '목수국 @₩5,000 = ₩1,000,000', size: 'P9', qty: 200 }] };
+      await handler({ method: 'POST', body }, { status(n) { status = n; return this; }, json(d) { result = d; } });
+      assert.equal(status, 200, JSON.stringify(result)); assert.ok(result.requestNo);
+    }
+    assert.equal(sent.length, 2);
+    assert.match(sent[0].요청사항, /^\[주문 링크 h5IMKFPxIbES6Ci6KzPgeP\]/);
+    assert.match(sent[1].요청사항, /^\[제안서 abc-1234-xyz\]/);
+  } finally { global.fetch = original; }
+});
+test('catalog inquiries pretending to be orders without items still need qualification', async () => {
+  const original = global.fetch;
+  global.fetch = async () => { throw new Error('must not contact external services'); };
+  try {
+    let status;
+    await handler({ method: 'POST', body: { name: 'x', phone: '01000000000', agree: true, memo: '[주문 링크 h5IMKFPxIbES6Ci6KzPgeP] x', items: [] } }, { status(n) { status = n; return this; }, json() {} });
+    assert.equal(status, 400);
+  } finally { global.fetch = original; }
+});
