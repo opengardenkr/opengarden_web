@@ -5,64 +5,24 @@
 // website 필드는 honeypot(봇 트랩) — 사람에게는 보이지 않는 입력칸.
 // 값이 차 있으면 봇이므로 조용히 성공 응답만 하고 기록하지 않습니다.
 
-const crypto = require('crypto');
 const { qualifyInquiry } = require('../lib/inquiry');
+const { sendAlimtalk, clip } = require('../lib/solapi');
 
 const BASE = process.env.AIRTABLE_BASE_ID;
 const QTABLE = process.env.AIRTABLE_QUOTE_TABLE || '견적요청';
 const TOKEN = process.env.AIRTABLE_TOKEN;
-// 주문서 템플릿(tools/order-proposal/template.html)이 요청사항 첫머리에 붙이는 표시: '[주문 링크 <ID>] ' 또는 '[제안서 <ID>] '
-const ORDER_MEMO = /^\[(?:주문 링크|제안서) [A-Za-z0-9_-]{6,64}\] /;
+const { ORDER_MEMO } = require('../lib/quote-doc');
 
 // ── 솔라피 알림톡: 접수 확인 메시지를 고객 폰으로 발송 ──
 // 환경변수(SOLAPI_*)가 하나라도 없으면 조용히 건너뜀 → 미설정 상태에서도 접수는 정상 동작.
-// 승인 템플릿 변수: #{요청번호} #{요청자} #{품목요약}
-async function sendAlimtalk({ phone, no, name, summary }) {
-  const KEY = (process.env.SOLAPI_API_KEY || '').trim();
-  const SECRET = (process.env.SOLAPI_API_SECRET || '').trim();
-  const PFID = (process.env.SOLAPI_PFID || '').trim();
-  const TEMPLATE = (process.env.SOLAPI_TEMPLATE_ID || '').trim();
-  const FROM = (process.env.SOLAPI_SENDER || '').trim();
-  if (!KEY || !SECRET || !PFID || !TEMPLATE) return; // 발신번호(FROM)는 선택 — 없으면 SMS 대체발송만 꺼짐
-
-  const to = String(phone).replace(/\D/g, '');
-  if (to.length < 10) return;
-
-  // 품목요약이 너무 길면 축약 (알림톡 변수 길이 보호)
-  let items = summary;
-  if (items.length > 800) {
-    items = items.slice(0, 760).replace(/\n[^\n]*$/, '') + '\n…(그 외 품목은 상담 시 확인)';
-  }
-
-  // 인증 서명: HMAC-SHA256(secret, date+salt)
-  const date = new Date().toISOString();
-  const salt = crypto.randomBytes(20).toString('hex');
-  const signature = crypto.createHmac('sha256', SECRET).update(date + salt).digest('hex');
-
-  const message = {
-    to,
-    kakaoOptions: {
-      pfId: PFID,
-      templateId: TEMPLATE,
-      variables: {
-        '#{요청번호}': no,
-        '#{요청자}': name && name.trim() ? name.trim().slice(0, 40) : '고객',
-        '#{품목요약}': items,
-      },
-      disableSms: !FROM, // 발신번호가 있으면 카톡 실패 시 SMS/LMS 자동 대체발송
-    },
-  };
-  if (FROM) message.from = String(FROM).replace(/\D/g, ''); // SMS 대체발송용 발신번호(선택)
-
-  const r = await fetch('https://api.solapi.com/messages/v4/send', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `HMAC-SHA256 apiKey=${KEY}, date=${date}, salt=${salt}, signature=${signature}`,
-    },
-    body: JSON.stringify({ message }),
-  });
-  if (!r.ok) throw new Error(`Solapi ${r.status} ${await r.text().catch(() => '')}`);
+// 승인 템플릿(견적접수확인, SOLAPI_TEMPLATE_ID) 변수: #{요청번호} #{요청자} #{품목요약}
+const receiptVars = ({ no, name, summary }) => ({
+  '#{요청번호}': no,
+  '#{요청자}': name && name.trim() ? name.trim().slice(0, 40) : '고객',
+  '#{품목요약}': clip(summary, 800, '\n…(그 외 품목은 상담 시 확인)'),
+});
+async function sendReceipt({ phone, no, name, summary }) {
+  return sendAlimtalk({ to: phone, templateId: (process.env.SOLAPI_TEMPLATE_ID || '').trim(), variables: receiptVars({ no, name, summary }) });
 }
 
 module.exports = async (req, res) => {
@@ -148,10 +108,14 @@ module.exports = async (req, res) => {
     if (!r.ok) throw new Error(`Airtable ${r.status}`);
 
     // 접수 확인 알림톡 발송 — 실패해도 접수 자체는 성공으로 응답 (기록은 이미 완료됨)
-    try {
-      await sendAlimtalk({ phone: cleanPhone, no, name, summary });
-    } catch (e) {
-      console.error('alimtalk send failed:', e.message);
+    // 주문 링크·제안서 주문은 여기서 보내지 않는다: 에어테이블 자동화가 견적서 초안을 만들면
+    // /api/quote-issue가 견적서 링크가 든 알림톡을 한 통 보낸다(실패하면 그쪽이 이 접수 확인으로 대신 보낸다).
+    if (!fromOrder) {
+      try {
+        await sendReceipt({ phone: cleanPhone, no, name, summary });
+      } catch (e) {
+        console.error('alimtalk send failed:', e.message);
+      }
     }
 
     res.status(200).json({ ok: true, requestNo: no });
@@ -161,3 +125,5 @@ module.exports = async (req, res) => {
     });
   }
 };
+
+module.exports.receiptVars = receiptVars;

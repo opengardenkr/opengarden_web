@@ -22,6 +22,9 @@ const HANDLERS = {
   '/api/catalog': require('./api/catalog.js'),
   '/api/quote': require('./api/quote.js'),
   '/api/order-page': require('./api/order-page.js'),
+  '/api/quote-view': require('./api/quote-view.js'),
+  '/api/quote-issue': require('./api/quote-issue.js'),
+  '/api/quote-reply': require('./api/quote-reply.js'),
   '/api/stock': require('./api/stock.js'),
 };
 
@@ -43,12 +46,15 @@ http.createServer(async (req, res) => {
   if(url.pathname==='/sitemap-plants.xml')url.pathname='/api/plant-sitemap';
   const order=url.pathname.match(/^\/o\/([A-Za-z0-9_-]{22})$/);
   if(order){url.pathname='/api/order-page';url.searchParams.set('id',order[1]);}
+  const qk=url.pathname.match(/^\/q\/([A-Za-z0-9_-]{22})$/);
+  if(qk){url.pathname='/api/quote-view';url.searchParams.set('key',qk[1]);}
 
   // API 라우팅 — Vercel의 (req, res) 형식에 맞춰 query/body/status/json 보강
   if (HANDLERS[url.pathname]) {
     req.query = Object.fromEntries(url.searchParams);
     res.status = (c) => { res.statusCode = c; return res; };
     res.json = (o) => { res.setHeader('Content-Type', 'application/json; charset=utf-8'); res.end(JSON.stringify(o)); };
+    res.send = (b) => res.end(b);
     if (req.method === 'POST') {
       let body = '';
       for await (const chunk of req) body += chunk;
