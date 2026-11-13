@@ -49,13 +49,16 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).end();
   const id = typeof req.query.id === 'string' ? req.query.id : '';
   const att = typeof req.query.a === 'string' && /^att[A-Za-z0-9]{14}$/.test(req.query.a) ? req.query.a : '';
+  const ver = typeof req.query.v === 'string' && /^att[A-Za-z0-9]{14}$/.test(req.query.v) ? req.query.v : ''; // 카드 첫 사진의 첨부ID
   if (!/^rec[A-Za-z0-9]{14}$/.test(id)) return res.status(400).end();
   if (!BASE || !TOKEN) return res.status(503).end();
   try {
     const map = await bulkLists().catch(() => null);
     let list = map && map.has(id) ? map.get(id) : await recordList(id);
     let pick = att ? list.find((x) => x.id === att) : list[0];
-    if (att && !pick && map && map.has(id)) { list = await recordList(id); pick = list.find((x) => x.id === att); } // 방금 바꾼 사진
+    // 30분 묶음 목록이 낡았으면(방금 붙이거나 바꾼 사진 — 첨부ID가 다르거나 없음) 그 품종만 새로 읽는다
+    const stale = att ? !pick : !pick || (ver && pick.id !== ver);
+    if (stale && map && map.has(id)) { list = await recordList(id); pick = att ? list.find((x) => x.id === att) : list[0]; }
     if (!pick || !pick.url) return res.status(404).end();
     if (!allowedImage(pick.url)) throw new Error('Untrusted attachment');
     const r = await fetch(pick.url, { redirect: 'error', signal: AbortSignal.timeout(10000) });
