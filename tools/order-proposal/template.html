@@ -4,6 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>%%TITLE%% · 오픈가든</title>
+<link rel="icon" href="/assets/logo_green_notext.png" type="image/png"><link rel="apple-touch-icon" href="/assets/logo-mark.png">
 <meta property="og:title" content="오픈가든 · %%TITLE%%">
 <meta property="og:description" content="%%BASIS%% · 품목별 수량을 입력하고 바로 %%WORD%%을 요청하세요">
 <meta property="og:type" content="website">
@@ -478,7 +479,7 @@ body.obopen{overflow:hidden}
     picks = (Array.isArray(saved) ? saved : []).filter(function(k){ return IK[k]; });
     if (canPick && picks.length) applyInterest(picks, false);
     $('mine').hidden = !canPick; mineText();
-    if (store('og-guide') !== '1') openGuide(true);
+    if (store(GK()) !== '1') openGuide(true);
     else if (canPick && !picks.length && store('og-int-skip') !== '1') openPick();
   }
   function showOb(part){
@@ -487,11 +488,13 @@ body.obopen{overflow:hidden}
     $('ob').hidden = false; document.body.classList.add('obopen');
   }
   function closeOb(){
-    if (!$('obGuide').hidden) store('og-guide', '1');
+    if (!$('obGuide').hidden) store(GK(), '1');
     $('ob').hidden = true; document.body.classList.remove('obopen');
   }
   function wantPick(){ return obChain && canPick && !picks.length && store('og-int-skip') !== '1'; }
-  function guideDone(){ store('og-guide', '1'); if (wantPick()) openPick(); else closeOb(); }
+  // 가이드는 링크마다 한 번(2026-11-13 사용자 결정) — 새 주문서 링크를 받으면 다시 한 번 뜬다
+  function GK(){ return 'og-guide:' + (CFG.pid || location.pathname); }
+  function guideDone(){ store(GK(), '1'); if (wantPick()) openPick(); else closeOb(); }
   function openGuide(chain){ obChain = chain; demo(); showOb('guide'); showStep(0); $('obNext').focus(); }
   function showStep(i){
     obStep = i;
