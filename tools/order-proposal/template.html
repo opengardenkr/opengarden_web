@@ -212,7 +212,6 @@ nav.tabs a.mine-tab.off span{color:var(--gray)}
 .tag.min{color:var(--green);border:1px solid #BCD2BC}
 .tag.lic{color:#4F5A4C;border:1px solid #CDD5CA}
 .c-none{display:flex;align-items:center;justify-content:center;color:#8A9586;font-size:12.5px;font-weight:600}
-.d-lic{margin:8px 0 2px;font-size:12.5px;line-height:1.55;color:#4F5A4C;background:var(--soft);border-radius:8px;padding:7px 10px}
 .c-body>.c-tags,#dBody .c-tags{position:static;flex-direction:row;flex-wrap:wrap;margin:0 0 6px}
 .c-body>.c-tags .tag,#dBody .c-tags .tag{box-shadow:none}
 /* 첫 방문 안내(3단계 데모) · 관심 수목 고르기 */
@@ -322,7 +321,7 @@ body.obopen{overflow:hidden}
   </div>
   <div id="obPick" hidden>
     <h2 id="obPickH">어떤 수목을 찾으세요?</h2>
-    <p class="ob-d">고르신 수목을 맨 위 <b>★ 관심</b>에 모아 먼저 보여 드립니다. 여러 개 골라도 되고, 고른 순서대로 보여 드려요.</p>
+    <p class="ob-d">고른 수목을 맨 위에 먼저 보여 드려요.</p>
     <div class="ob-chips" id="obChips"></div>
     <div class="ob-btns"><button type="button" class="ob-skip" id="obPass">건너뛰기</button><button type="button" class="ob-next" id="obApply" disabled>골라 주세요</button></div>
   </div>
@@ -530,14 +529,10 @@ body.obopen{overflow:hidden}
       ['품종 고르기', CFG.compact
         ? '위 탭이나 검색으로 품종을 찾고 카드를 누르세요. 규격·가격을 포함한 사진이 크게 보입니다.'
         : '위 탭으로 품종을 찾고 카드에서 사진·규격·가격을 확인하세요.'],
-      ['수량 넣기', '＋ 버튼이나 숫자로 수량을 넣으세요.'
-        + (CFG.minEach ? ' 품종당 ' + fmt(CFG.minEach) + u + '부터' + (CFG.step ? ', ' + fmt(CFG.step) + u + ' 단위' : '') + '입니다.' : '')
-        + (CFG.minTotal ? ' 전체 ' + fmt(CFG.minTotal) + u + '부터 주문됩니다.' : '')
-        + (CFG.min ? ' 최소 주문은 ' + CFG.minLabel + '입니다.' : '')
-        + (document.querySelector('.tag.min') ? ' 「최소」 태그가 붙은 품종은 그 수량부터입니다.' : '')
-        + (document.querySelector('.tag.low') ? ' 「품절임박」은 남은 재고가 적은 품종으로, 품종당 최소 수량 없이 담을 수 있습니다.' : '')
-        + ' 담은 금액은 아래에 바로 더해집니다.'],
-      [W + ' 요청 → 견적서가 카톡으로', '아래 [' + W + ' 요청하기]를 누르고 연락처만 넣으면 끝. 견적서가 카카오톡(안 되면 문자)으로 바로 도착합니다. 견적서에서 [확정]하고 입금하시면 주문이 확정됩니다.']
+      // 비우는 단계(2026-11-13 사용자 요청): 보면 아는 것(＋ 버튼, 태그 뜻, 금액 합산)은 쓰지 않는다 — 수량 규칙만
+      ['수량 넣기', [CFG.minEach ? '품종당 ' + fmt(CFG.minEach) + u + '부터' + (CFG.step ? ', ' + fmt(CFG.step) + u + ' 단위' : '') : '',
+        CFG.minTotal ? '전체 ' + fmt(CFG.minTotal) + u + '부터' : '', CFG.min ? '최소 ' + CFG.minLabel : ''].filter(Boolean).join(' · ') || '＋로 수량을 넣으세요.'],
+      [W + ' 요청 → 견적서가 카톡으로', '연락처만 넣으면 견적서가 카톡으로 옵니다. [확정]하고 입금하면 주문 확정.']
     ];
   }
   function openPick(){
@@ -702,7 +697,6 @@ body.obopen{overflow:hidden}
       b.appendChild(d);
     }
     ['.c-tags', '.c-name', '.c-latin', '.chips', '.feat', '.c-note'].forEach(function(sel){ var n = c.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
-    if (c.querySelector('.tag.lic')) { var lic = document.createElement('p'); lic.className = 'd-lic'; lic.textContent = '증식 금지 · 육종사 라이선스 품종입니다. 키워서 판매·식재하는 것은 되고, 삽목·분주 등으로 번식하는 것은 안 됩니다.'; b.appendChild(lic); }
     ['.opts', '.c-warn'].forEach(function(sel){ var n = c.querySelector(sel); if (!n) return; var ph = document.createComment(sel); n.parentNode.insertBefore(ph, n); n._ph = ph; b.appendChild(n); });
     dCard = c; $('dOk').textContent = '담기 완료';
     document.body.classList.add('dopen');
@@ -791,13 +785,13 @@ body.obopen{overflow:hidden}
       if (CFG.minTotal) $('progI').style.width = (Math.min(1, qty / CFG.minTotal) * 100) + '%';
       if (short) { t.textContent = '최소 수량이 안 된 품종 ' + short + '개' + (CFG.minEach ? ' — 품종당 ' + fmt(CFG.minEach) + u + '부터' : ' — 카드의 최소 수량을 확인하세요'); t.className = 'prog-txt bad'; }
       else if (CFG.minTotal && qty < CFG.minTotal) { t.textContent = '총 ' + fmt(CFG.minTotal) + CFG.unit + '부터 주문 — ' + fmt(CFG.minTotal - qty) + CFG.unit + ' 남음'; t.className = 'prog-txt'; }
-      else if (CFG.minTotal) { t.textContent = '최소 주문 수량(' + fmt(CFG.minTotal) + CFG.unit + ')을 충족했습니다'; t.className = 'prog-txt ok'; }
+      else if (CFG.minTotal) { t.textContent = '최소 ' + fmt(CFG.minTotal) + CFG.unit + ' 충족'; t.className = 'prog-txt ok'; }
       else { t.textContent = ''; t.hidden = true; }
     }
     else if (!CFG.min) { $('prog').hidden = true; t.hidden = true; }
     else {
       $('progI').style.width = (Math.min(1, total / CFG.min) * 100) + '%';
-      if (total >= CFG.min) { t.textContent = '최소 주문 금액(' + CFG.minLabel + ')을 충족했습니다'; t.className = 'prog-txt ok'; }
+      if (total >= CFG.min) { t.textContent = '최소 ' + CFG.minLabel + ' 충족'; t.className = 'prog-txt ok'; }
       else { t.textContent = '최소 주문 ' + CFG.minLabel + '까지 ₩' + fmt(CFG.min - total) + ' 남음'; t.className = 'prog-txt'; }
     }
     $('go').disabled = list.length === 0 || ((rule || CFG.minTotal) && (short > 0 || (CFG.minTotal && qty < CFG.minTotal)));
@@ -857,7 +851,7 @@ body.obopen{overflow:hidden}
         var text = summaryText(j.requestNo || '', st);
         var box = $('sheetIn');
         box.innerHTML = '<div class="done"><h2>' + CFG.word + ' 요청이 접수되었습니다</h2><div class="no"></div>'
-          + '<p>견적서가 곧 카카오톡(안 되면 문자)으로 도착합니다. 재고·납기는 담당자가 확인한 뒤 연락드립니다.</p>'
+          + '<p>견적서가 곧 카카오톡(안 되면 문자)으로 도착합니다.</p>'
           + '<div class="acts"><button type="button" id="cpy">요청 내용 복사</button>' + (navigator.share ? '<button type="button" id="shr">단톡방에 공유</button>' : '') + '</div>'
           + '<p class="copied" id="cpyMsg"></p>'
           + '<a class="btn-kakao" href="https://pf.kakao.com/_lGfxhX/chat" target="_blank" rel="noopener">카카오톡 채널 열기</a></div>';
