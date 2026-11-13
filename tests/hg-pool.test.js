@@ -152,3 +152,20 @@ test('interest survey input is validated and rate-limited', () => {
   assert.equal(hit, true);
   assert.equal(limited('5.6.7.8', 1000), false);
 });
+
+test('cards show a red low-stock tag and a per-variety minimum tag', () => {
+  const recs = [
+    rec('rec0000000000000a', { [F.pool]: true, [F.sname]: "Hydrangea m. 'Red Baron'", [F.kname]: "수국 '레드바론'", [F.size]: 'P12', [F.price]: 4900, [F.stock]: 51 }),
+    rec('rec0000000000000b', { [F.pool]: true, [F.sname]: "Hydrangea pan. 'Framboisine'", [F.kname]: "목수국 '프랑부아진'", [F.size]: 'P8', [F.price]: 6500, [F.minQty]: 1000 }),
+    rec('rec0000000000000c', { [F.pool]: true, [F.sname]: "Hydrangea pan. 'Limelight'", [F.kname]: "목수국 '라임라이트'", [F.size]: 'P9', [F.price]: 4900, [F.stock]: 2000 }),
+  ];
+  const items = poolItems(recs);
+  assert.equal(items.find((i) => /프랑부아진/.test(i.name)).min, 1000);
+  const html = renderSections({ items, groups: GROUPS }).sections;
+  const cardOf = (name) => html.split('<article').find((x) => x.includes(name));
+  assert.match(cardOf('레드바론'), /data-cap="51"/);
+  assert.match(cardOf('레드바론'), /class="tag low">품절임박</);
+  assert.match(cardOf('프랑부아진'), /data-min="1000"/);
+  assert.match(cardOf('프랑부아진'), /class="tag min">최소 1,000주</);
+  assert.doesNotMatch(cardOf('라임라이트'), /class="tag/);
+});
