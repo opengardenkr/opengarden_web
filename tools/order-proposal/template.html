@@ -210,6 +210,9 @@ nav.tabs a.mine-tab.off span{color:var(--gray)}
 .tag{font-size:11px;font-weight:800;line-height:1.5;border-radius:6px;padding:1px 7px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18);white-space:nowrap}
 .tag.low{color:#D32F2F;border:1px solid #F2B8B5}
 .tag.min{color:var(--green);border:1px solid #BCD2BC}
+.tag.lic{color:#4F5A4C;border:1px solid #CDD5CA}
+.c-none{display:flex;align-items:center;justify-content:center;color:#8A9586;font-size:12.5px;font-weight:600}
+.d-lic{margin:8px 0 2px;font-size:12.5px;line-height:1.55;color:#4F5A4C;background:var(--soft);border-radius:8px;padding:7px 10px}
 .c-body>.c-tags,#dBody .c-tags{position:static;flex-direction:row;flex-wrap:wrap;margin:0 0 6px}
 .c-body>.c-tags .tag,#dBody .c-tags .tag{box-shadow:none}
 /* 첫 방문 안내(3단계 데모) · 관심 수목 고르기 */
@@ -699,6 +702,7 @@ body.obopen{overflow:hidden}
       b.appendChild(d);
     }
     ['.c-tags', '.c-name', '.c-latin', '.chips', '.feat', '.c-note'].forEach(function(sel){ var n = c.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
+    if (c.querySelector('.tag.lic')) { var lic = document.createElement('p'); lic.className = 'd-lic'; lic.textContent = '증식 금지 · 육종사 라이선스 품종입니다. 키워서 판매·식재하는 것은 되고, 삽목·분주 등으로 번식하는 것은 안 됩니다.'; b.appendChild(lic); }
     ['.opts', '.c-warn'].forEach(function(sel){ var n = c.querySelector(sel); if (!n) return; var ph = document.createComment(sel); n.parentNode.insertBefore(ph, n); n._ph = ph; b.appendChild(n); });
     dCard = c; $('dOk').textContent = '담기 완료';
     document.body.classList.add('dopen');

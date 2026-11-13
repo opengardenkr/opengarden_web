@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const { poolItems, catOf, cleanLatin, GROUPS, FIELDS: F, INFO_FIELDS: INFO } = require('../lib/hg-pool');
 const { qtyRule } = require('../api/order-page');
-const { renderSections, renderPage } = require('../lib/order-page');
+const { renderSections, renderPage, card } = require('../lib/order-page');
 
 const rec = (id, fields) => ({ id, fields });
 const M1 = 'recMMMMMMMMMMMMM1';
@@ -50,7 +50,7 @@ test('quantity rule only accepts positive integers', () => {
   assert.deepEqual(qtyRule({ minEach: 200, step: 0.5 }), { minEach: 200, minTotal: 0 });
 });
 
-test('주문서 묶음 PBR moves whole cards into the PBR tab; 주문서 정렬 places a card; P8 sorts first', () => {
+test('주문서 묶음 PBR tags the card (no PBR tab); 주문서 정렬 places a card; P8 sorts first', () => {
   const r = (id, latin, kname, size, extra) => ({ id, fields: { [F.pool]: true, [F.sname]: latin, [F.kname]: kname, [F.size]: size, [F.price]: 4900, [F.master]: ['recM' + id.slice(4)], ...extra } });
   const recs = [
     r('rec000000000000a1', "Hydrangea pan. Living 'Infinity'® NEW", "목수국 '리빙 인피니티'", 'P9', { [F.bundle]: 'PBR' }),
@@ -59,18 +59,26 @@ test('주문서 묶음 PBR moves whole cards into the PBR tab; 주문서 정렬 
     r('rec000000000000a4', "Hydrangea pan. 'Bobo'", "목수국 '보보'", 'P9', {}),
     r('rec000000000000a5', "Weigela 'Spirit' PBR", "병꽃나무 '스피릿'", 'P9', { [F.bundle]: { name: 'PBR' } }),
   ];
-  // 같은 품종의 두 번째 규격 줄이 묶음이 아니면 카드는 속 분류에 남는다
+  // 같은 품종의 두 번째 규격 줄이 묶음이 아니어도 라이선스 품종이다
   recs.push({ id: 'rec000000000000a6', fields: { ...recs[4].fields, [F.size]: 'P12' } });
   recs[5].fields[F.bundle] = undefined;
   recs.push({ id: 'rec000000000000a7', fields: { ...recs[2].fields, [F.size]: 'P9' } });
   const items = poolItems(recs).filter((x) => x.kind !== 'info');
-  assert.equal(items.find((x) => /인피니티/.test(x.name)).grp, 'PBR 품종');
+  assert.equal(items.find((x) => /인피니티/.test(x.name)).grp, '수국');
+  assert.equal(items.find((x) => /인피니티/.test(x.name)).lic, 1);
   assert.equal(items.find((x) => /스피릿/.test(x.name)).grp, '꽃관목');
+  assert.equal(items.find((x) => /스피릿/.test(x.name)).lic, 1);
+  assert.equal(items.find((x) => /보보/.test(x.name)).lic, undefined);
   const hyd = items.filter((x) => x.grp === '수국').map((x) => x.name);
-  assert.deepEqual(hyd, ["목수국 '디아망 루즈'", "목수국 '프랑부아진'", "목수국 '보보'"]);
+  assert.deepEqual(hyd, ["목수국 '디아망 루즈'", "목수국 '프랑부아진'", "목수국 '리빙 인피니티'", "목수국 '보보'"]);
   assert.deepEqual(items.find((x) => /프랑부아진/.test(x.name)).rows.map((x) => x[0]), ['P8', 'P9']);
   assert.ok(items.every((x) => !('sort' in x) && !('bundle' in x)));
-  assert.equal(GROUPS[1][0], 'PBR 품종');
+  assert.ok(GROUPS.every(([g]) => !/PBR/.test(g)));
+  // 카드: 라이선스 태그, 사진 없는 품종은 '사진 준비 중' 칸
+  const html = card({ ...items.find((x) => /스피릿/.test(x.name)), k: 'x1' }, {});
+  assert.match(html, /tag lic">증식 금지/);
+  assert.match(html, /c-photo c-none"><span>사진 준비 중/);
+  assert.equal(cleanLatin("Syringa m. 'Flowerfesta'® PinkPBR"), "Syringa m. 'Flowerfesta'® Pink");
 });
 
 // 브라우저 로직: 품종당 200주 · 총 600주 미만이면 요청 버튼이 잠긴다
