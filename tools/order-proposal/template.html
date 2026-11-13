@@ -211,6 +211,7 @@ nav.tabs a.mine-tab.off span{color:var(--gray)}
 .tag.low{color:#D32F2F;border:1px solid #F2B8B5}
 .tag.min{color:var(--green);border:1px solid #BCD2BC}
 .tag.lic{color:#4F5A4C;border:1px solid #CDD5CA}
+.d-lic{margin:8px 0 2px;font-size:12.5px;line-height:1.5;color:#4F5A4C}
 .c-none{display:flex;align-items:center;justify-content:center;color:#8A9586;font-size:12.5px;font-weight:600}
 .c-body>.c-tags,#dBody .c-tags{position:static;flex-direction:row;flex-wrap:wrap;margin:0 0 6px}
 .c-body>.c-tags .tag,#dBody .c-tags .tag{box-shadow:none}
@@ -423,13 +424,13 @@ body.obopen{overflow:hidden}
       inp.addEventListener('focus', function(){ if (inp.value === '0') inp.select(); });
     });
     [].slice.call(document.querySelectorAll('.c-photo img')).forEach(function(im){ im.addEventListener('error', function(){ if (im._r) return; im._r = 1; setTimeout(function(){ im.src = im.src + (im.src.indexOf('?') < 0 ? '?' : '&') + 'r=1'; }, 1500); }); });
-    // 카드 사진 넘기기: 대표사진 ↔ 농장 실사 (실사는 손댈 때 처음 받는다)
+    // 카드 사진 넘기기: 참고 사진 ↔ 농장 실사 (실사는 손댈 때 처음 받는다)
     [].slice.call(document.querySelectorAll('.c-swipe')).forEach(function(p){
       var tr = p.querySelector('.c-track'), alt = p.querySelector('.c-alt'), lab = p.querySelector('.c-ref'), bt = p.querySelector('.c-flip');
       if (!tr || !alt || !bt) return;
       var load = function(){ if (!alt.getAttribute('src') && alt.dataset.src) alt.src = alt.dataset.src; };
       var onFarm = function(){ return tr.scrollLeft > tr.clientWidth / 2; };
-      var paint = function(){ var f = onFarm(); if (lab) lab.textContent = f ? '농장 실사' : '다 자란 모습'; bt.textContent = f ? '‹ 대표사진' : '농장 실사 ›'; bt.setAttribute('aria-label', f ? '대표사진 보기' : '농장 실사 보기'); };
+      var paint = function(){ var f = onFarm(); if (lab) lab.textContent = f ? '농장 실사' : '참고 사진'; bt.textContent = f ? '‹ 참고 사진' : '농장 실사 ›'; bt.setAttribute('aria-label', f ? '참고 사진 보기' : '농장 실사 보기'); };
       tr.addEventListener('touchstart', load, { passive: true });
       tr.addEventListener('pointerdown', load);
       tr.addEventListener('scroll', function(){ load(); clearTimeout(tr._t); tr._t = setTimeout(paint, 80); }, { passive: true });
@@ -666,15 +667,14 @@ body.obopen{overflow:hidden}
     var b = $('dBody'); b.innerHTML = '';
     var img = c.querySelector('.c-photo img');
     if (img) {
-      // 사진 두 칸: [대표사진] 다 자란 모습 / [농장 실사] 현지 매대의 출하 묘 — 눌러서 바꿔 보고, 사진은 자르지 않고 원본 비율 그대로
+      // 사진 두 칸: [참고 사진] 대표사진·공급사 사진 / [농장 실사] 현지 매대의 출하 묘 — 눌러서 바꿔 보고, 사진은 자르지 않고 원본 비율 그대로
       var g = (img.dataset.g || '').split(' ').filter(Boolean), first = img.dataset.big || img.src, base = first.replace(/&v=[^&]*/, '');
       var all = g.length ? g.map(function(x, i){ var a = x.split('.')[1]; return { k: x.split('.')[0], u: i ? base + '&a=' + a + '&v=' + a : first }; }) : [{ k: 's', u: first }];
       var by = function(k){ return all.filter(function(x){ return x.k === k; }); };
       var hero = by('h'), farm = by('f'), sup = by('s');
-      var top = hero.length ? hero : sup.slice(0, 1), real = farm.length ? farm : (hero.length ? sup : sup.slice(1));
-      var panes = [];
-      if (top.length) panes.push({ t: hero.length ? '대표사진' : '공급사 사진', s: hero.length ? '다 자란 모습 · 참고' : '', list: top, cr: hero.length ? img.dataset.cr : '' });
-      if (real.length) panes.push({ t: farm.length ? '농장 실사' : '실물 사진', s: farm.length ? '현지 매대 · 출하 묘' : '공급사 사진', list: real });
+      var ref = hero.concat(sup), panes = [];
+      if (ref.length) panes.push({ t: '참고 사진', s: '', list: ref, cr: hero.length ? img.dataset.cr : '' });
+      if (farm.length) panes.push({ t: '농장 실사', s: '현지 매대 · 출하 묘', list: farm });
       var d = document.createElement('div'); d.className = 'd-photo';
       if (panes.length > 1) {
         var tabs = document.createElement('div'); tabs.className = 'd-tabs';
@@ -697,6 +697,7 @@ body.obopen{overflow:hidden}
       b.appendChild(d);
     }
     ['.c-tags', '.c-name', '.c-latin', '.chips', '.feat', '.c-note'].forEach(function(sel){ var n = c.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
+    if (c.querySelector('.tag.lic')) { var lic = document.createElement('p'); lic.className = 'd-lic'; lic.textContent = '키워서 판매·식재는 되고, 삽목·분주 등 번식은 안 됩니다.'; b.appendChild(lic); }
     ['.opts', '.c-warn'].forEach(function(sel){ var n = c.querySelector(sel); if (!n) return; var ph = document.createComment(sel); n.parentNode.insertBefore(ph, n); n._ph = ph; b.appendChild(n); });
     dCard = c; $('dOk').textContent = '담기 완료';
     document.body.classList.add('dopen');

@@ -95,7 +95,7 @@ test('cards with a hero and a farm photo swipe to the farm photo, loaded on dema
   const farmOnly = cards.find((c) => c.includes('바닐라'));
   assert.ok(!farmOnly.includes('c-swipe')); assert.match(farmOnly, /<span class="c-ref">농장 실사<\/span>/);
   const heroOnly = cards.find((c) => c.includes('선데'));
-  assert.ok(!heroOnly.includes('c-swipe')); assert.match(heroOnly, /다 자란 모습/);
+  assert.ok(!heroOnly.includes('c-swipe')); assert.match(heroOnly, /참고 사진/);
 });
 
 test('first cards load their photo eagerly, the rest lazily', () => {

@@ -127,10 +127,13 @@ test('photo order: hero first, farm display photo second, supplier after; credit
   const html = renderSections({ title: 't', groups: GROUPS, items: [it] }).sections;
   assert.match(html, /data-g="h\.attHHHHHHHHHHHHH1 f\.attFFFFFFFFFFFFF1 s\.attSSSSSSSSSSSSS1"/);
   assert.match(html, /data-cr="사진: A/);
-  assert.match(html, /class="c-ref">다 자란 모습/);
+  assert.match(html, /class="c-ref">참고 사진/);
   const [noHero] = poolItems([rec('rec0000000000000a', { ...rec2.fields, [F.hero]: [] })]);
   assert.equal(noHero.credit, '');
-  assert.ok(!/c-ref/.test(renderSections({ title: 't', groups: GROUPS, items: [noHero] }).sections));
+  // 공급사 사진도 '참고 사진'(대표사진과 한 이름) — 농장 실사가 있으면 넘겨 보기
+  const noHeroHtml = renderSections({ title: 't', groups: GROUPS, items: [noHero] }).sections;
+  assert.match(noHeroHtml, /class="c-ref">참고 사진/);
+  assert.match(noHeroHtml, /c-swipe/);
 });
 
 test('interest picker: genus label from info card title, else most common Korean first word', () => {
