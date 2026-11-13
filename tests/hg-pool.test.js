@@ -186,11 +186,11 @@ test('cards show a red low-stock tag and a per-variety minimum tag', () => {
 test('confirmed quotes hold stock: latest confirmed revision per chain, group prefix stripped, sold-out rows drop', () => {
   const { confirmedTotals, applyReserved } = require('../lib/hg-pool');
   const totals = confirmedTotals([
-    { number: 'OG-20261113-002', status: '수락', items: [{ name: "수국 목수국 '다루마'", spec: 'P9', qty: 1000 }] },
+    { number: 'OG-20261113-002', status: '수주확정', items: [{ name: "수국 목수국 '다루마'", spec: 'P9', qty: 1000 }] },
     { number: 'OG-20261113-002-R2', status: '수주확정', items: [{ name: "수국 목수국 '다루마'", spec: 'P9', qty: 400 }] }, // 최신 수정본만
-    { number: 'OG-20261113-003', status: '발송', items: [{ name: "꽃관목 병꽃나무 '스파클'", spec: 'P9', qty: 99 }] }, // 확정 전 — 안 뺀다
+    { number: 'OG-20261113-003', status: '수락', items: [{ name: "꽃관목 병꽃나무 '스파클'", spec: 'P9', qty: 99 }] }, // 고객 [확정]만 — 입금 전이라 안 뺀다
     { number: 'OG-20261113-004', status: '완료', items: [{ name: "PBR 품종 병꽃나무 '피코벨라로소'", spec: 'P9', qty: 726 }] }, // 옛 탭 이름
-    { number: 'OG-20261113-005', status: '수락', items: [{ name: "병꽃나무 '앰버'", spec: 'P9', qty: 24 }] }, // 탭 이름 없이
+    { number: 'OG-20261113-005', status: '입고대기', items: [{ name: "병꽃나무 '앰버'", spec: 'P9', qty: 24 }] }, // 탭 이름 없이
   ]);
   assert.equal(totals.get("수국 목수국 '다루마'|P9"), 400);
   assert.equal(totals.has("꽃관목 병꽃나무 '스파클'|P9"), false);
