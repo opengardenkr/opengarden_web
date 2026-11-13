@@ -202,6 +202,8 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 .mine-grp h2 span::before{content:'★ '}
 nav.tabs a.mine-tab{background:var(--green);border-color:var(--green);color:#fff}
 nav.tabs a.mine-tab span{color:#cfe0d0}
+nav.tabs a.mine-tab.off{background:#fff;color:var(--green);border-color:var(--green)}
+nav.tabs a.mine-tab.off span{color:var(--gray)}
 .card.dup{display:none}
 /* 카드 태그: 품절임박(빨강) · 이 품종만의 최소 수량 */
 .c-tags{position:absolute;left:6px;top:6px;z-index:1;display:flex;flex-direction:column;align-items:flex-start;gap:4px;pointer-events:none}
@@ -281,17 +283,12 @@ body.obopen{overflow:hidden}
 <header class="hero"><div class="wrap">
   <div class="brand">OPEN GARDEN</div>
   <h1>%%TITLE%%</h1>
-  <div class="meta">%%DATE%% · %%BASIS%%</div>
+  <div class="meta">%%META%%</div>
 </div></header>
 <button type="button" class="readme" id="readme" hidden><span class="wrap"><span class="ic">!</span><b id="readmeT">주문 전 읽어주세요</b><span class="s">3단계 안내 ›</span></span></button>
-<div class="notice"><div class="wrap"><ul>
-  <li>판매가 <b>%%PRICEUNIT%%</b></li>
-  %%NOTICE%%
-</ul></div></div>
 <nav class="tabs" aria-label="품목 구분"><div class="wrap">%%NAV%%</div></nav>
 <main class="wrap">
   <p class="for" id="forWho" hidden></p>
-  <p class="howto">필요한 품목에 <b>%%QTYLABEL%%</b>을 넣고 아래 <b>%%WORD%% 요청</b>을 누르면 견적서가 카카오톡(안 되면 문자)으로 바로 도착합니다. 재고·납기는 담당자가 확인 후 연락드립니다.</p>
   <div class="mine" id="mine" hidden><span class="t">관심 수목</span><span class="l" id="mineL"></span><button type="button" id="mineB">바꾸기</button></div>
   <div class="srch" id="srchBox" hidden><input id="srch" type="search" enterkeyhint="search" placeholder="품종 검색 (예: 목수국, Limelight)" aria-label="품종 검색"><p class="srch-none" id="srchNone" hidden>찾는 품종이 없습니다</p></div>
   <div id="secure">%%SECURE%%</div>
@@ -450,9 +447,9 @@ body.obopen{overflow:hidden}
     return null;
   }
   // start()가 이 줄보다 먼저 돌 수 있어(주문 링크는 바로 시작) 값은 setupOnboard에서 채운다
-  var IK, IKS, moved, picks, sel, canPick, obChain, obStep, STEPS;
+  var IK, IKS, moved, picks, sel, canPick, obChain, obStep, STEPS, mineOn;
   function setupOnboard(){
-    IK = Object.create(null); IKS = []; moved = []; picks = []; sel = []; canPick = false; obChain = false; obStep = 0; STEPS = [];
+    IK = Object.create(null); IKS = []; moved = []; picks = []; sel = []; canPick = false; obChain = false; obStep = 0; STEPS = []; mineOn = true;
     [].slice.call(document.querySelectorAll('#secure .card:not(.info)')).forEach(function(c){
       var k = c.dataset.ik; if (!k) return;
       if (!IK[k]) { IK[k] = { k:k, l:c.dataset.il || k, n:0 }; IKS.push(IK[k]); }
@@ -471,7 +468,7 @@ body.obopen{overflow:hidden}
     $('obSkip').addEventListener('click', function(){ if (obStep > 0) showStep(obStep - 1); else guideDone(); });
     $('obPass').addEventListener('click', function(){ if (!picks.length) store('og-int-skip', '1'); closeOb(); });
     $('obApply').addEventListener('click', function(){
-      store('og-int', JSON.stringify(sel)); applyInterest(sel.slice(), true); closeOb();
+      store('og-int', JSON.stringify(sel)); mineOn = true; applyInterest(sel.slice(), true); closeOb();
       var t = $('g-mine'); if (t && !t.hidden) t.scrollIntoView({ behavior:'smooth', block:'start' });
     });
     var saved = []; try { saved = JSON.parse(store('og-int') || '[]') || []; } catch(e) {}
@@ -507,7 +504,7 @@ body.obopen{overflow:hidden}
     var u = CFG.unit || '주', W = CFG.word;
     var cs = [].slice.call(document.querySelectorAll('#secure .card:not(.info)')).filter(function(c){ return !c.closest('[hidden]') && !c.hidden; }).slice(0, 2);
     var tabs = [].slice.call(document.querySelectorAll('nav.tabs a')).filter(function(a){ return !a.hidden; }).slice(0, 3)
-      .map(function(a){ return (a.firstChild && a.firstChild.textContent || '').trim(); });
+      .map(function(a){ return (a.textContent || '').replace(/\s*\d[\d,]*\s*$/, '').trim(); });
     var ts = document.querySelectorAll('.mk-tabs span');
     [].forEach.call(ts, function(s, i){ s.textContent = tabs[i] || ''; s.hidden = !tabs[i]; });
     [].forEach.call(document.querySelectorAll('.mk-card'), function(m, i){
@@ -528,7 +525,7 @@ body.obopen{overflow:hidden}
     document.querySelector('.mk-msg p').textContent = '[오픈가든] 견적서가 발행되었습니다. 합계 ₩' + fmt(qs[3] * price);
     STEPS = [
       ['품종 고르기', CFG.compact
-        ? '위 탭이나 검색으로 품종을 찾고 카드를 누르세요. 사진(다 자란 모습·농장 실사)과 규격·가격이 크게 보입니다.'
+        ? '위 탭이나 검색으로 품종을 찾고 카드를 누르세요. 규격·가격을 포함한 사진이 크게 보입니다.'
         : '위 탭으로 품종을 찾고 카드에서 사진·규격·가격을 확인하세요.'],
       ['수량 넣기', '＋ 버튼이나 숫자로 수량을 넣으세요.'
         + (CFG.minEach ? ' 품종당 ' + fmt(CFG.minEach) + u + '부터' + (CFG.step ? ', ' + fmt(CFG.step) + u + ' 단위' : '') + '입니다.' : '')
@@ -565,16 +562,23 @@ body.obopen{overflow:hidden}
     moved.forEach(function(c){ if (c._home) c._home.parentNode.insertBefore(c, c._home); c.classList.remove('dup'); });
     moved = [];
     picks = keys.filter(function(k){ return IK[k]; });
+    if (!picks.length) mineOn = true;
     var sec = $('g-mine');
     if (picks.length && !sec) {
       sec = document.createElement('section'); sec.className = 'grp mine-grp'; sec.id = 'g-mine';
       sec.innerHTML = '<h2><span>내 관심 수목</span><small></small></h2><div class="cards"></div>';
       $('secure').insertBefore(sec, $('secure').firstChild);
-      var a = document.createElement('a'); a.href = '#'; a.dataset.to = 'g-mine'; a.className = 'mine-tab'; a.innerHTML = '★ 관심 <span></span>';
-      a.addEventListener('click', function(e){ e.preventDefault(); sec.scrollIntoView({ behavior:'smooth', block:'start' }); });
+      var a = document.createElement('a'); a.href = '#'; a.dataset.to = 'g-mine'; a.className = 'mine-tab'; a.id = 'mineTab'; a.innerHTML = '<b>★</b> 관심 <span></span>';
+      // 관심 탭은 켜고 끄는 단추: 켜면 고른 수목을 맨 위에 모으고, 다시 누르면 원래 순서(수국부터)로 돌린다
+      a.addEventListener('click', function(e){
+        e.preventDefault();
+        mineOn = !mineOn; applyInterest(picks, false);
+        var to = mineOn ? sec : document.querySelector('#secure section.grp:not([hidden])');
+        if (to) to.scrollIntoView({ behavior:'smooth', block:'start' });
+      });
       var nav = document.querySelector('nav.tabs .wrap'); if (nav) nav.insertBefore(a, nav.firstChild);
     }
-    if (sec) {
+    if (sec && mineOn) {
       var box = sec.querySelector('.cards'), all = [].slice.call(document.querySelectorAll('#secure .card'));
       picks.forEach(function(k){
         var info = false;
@@ -587,6 +591,13 @@ body.obopen{overflow:hidden}
       });
     }
     refreshNav(); mineText();
+    var tab = $('mineTab');
+    if (tab) {
+      tab.hidden = !picks.length; tab.classList.toggle('off', !mineOn);
+      tab.firstChild.textContent = mineOn ? '★' : '☆';
+      tab.setAttribute('aria-pressed', mineOn ? 'true' : 'false');
+      tab.querySelector('span').textContent = picks.reduce(function(n, k){ return n + IK[k].n; }, 0);
+    }
     if (record) sendSurvey();
   }
   // 탭 숫자·묶음 제목 숫자를 지금 모양에 맞춘다. 비면 탭과 묶음을 숨긴다.
@@ -594,6 +605,7 @@ body.obopen{overflow:hidden}
     [].forEach.call(document.querySelectorAll('nav.tabs a[data-to]'), function(a){
       var s = $(a.dataset.to); if (!s) return;
       var n = s.querySelectorAll('.card:not(.info)').length, sp = a.querySelector('span'), sm = s.querySelector('h2 small');
+      if (a.id === 'mineTab') { s.hidden = !n; return; } // 관심 탭은 꺼져 있어도 남는다(다시 켜는 단추)
       if (sp) sp.textContent = n;
       a.hidden = !n; s.hidden = !n;
       if (sm) sm.textContent = /\d+품종/.test(sm.textContent) ? sm.textContent.replace(/\d+품종/, n + '품종') : n + '품종';

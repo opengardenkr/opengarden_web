@@ -199,7 +199,7 @@ module.exports = async (req, res) => {
     const spec = {
       title: String(f[F.title] || '오픈가든 주문서').slice(0, 60),
       date: dotDate(iso),
-      basis: iso ? `${iso} 재고 기준` : '오픈가든 주문서',
+      basis: iso ? `${iso.slice(0, 4)}년 ${+iso.slice(5, 7)}월 재고 기준` : '오픈가든 주문서', // 머리 한 줄(2026-11-13 요청: 날짜 두 번 → 달 기준 한 번)
       groups: isPool ? pool.GROUPS : toGroups(f[F.items]),
       items,
     };
@@ -208,16 +208,9 @@ module.exports = async (req, res) => {
     const terms = String(f[F.memo] || '').split('\n').map((t) => t.trim()).filter(Boolean).slice(0, 12).map(bold);
     const pageUrl = `${SITE}/o/${id}`;
     const html = renderPage(spec, {
-      word: '주문', unit: unitOf(items), nav, pageUrl,
+      word: '주문', unit: unitOf(items), nav, pageUrl, meta: spec.basis,
       ogImage: `${SITE}/assets/og-order.jpg`, ogDim: true,
       secure: sections, terms,
-      notice: [
-        ...(rule.minEach ? [`품종당 <b>${rule.minEach.toLocaleString('en-US')}주</b>부터${rule.step ? ` · 추가는 <b>${rule.step.toLocaleString('en-US')}주</b> 단위` : ''}`] : []),
-        ...(!rule.minEach && rule.step ? [`<b>${rule.step.toLocaleString('en-US')}주</b> 단위로 주문`] : []),
-        ...(rule.minTotal ? [`총 <b>${rule.minTotal.toLocaleString('en-US')}주</b>부터 주문`] : []),
-        ...(min ? [`최소 주문 <b>${esc(minLabel(min))}</b>`] : []),
-        ...(isPool ? ['대표사진은 다 자란 모습(참고) · 출하는 포트 묘'] : []),
-      ],
       cfg: { pid: id, title: spec.title, date: spec.date, min, minLabel: min ? minLabel(min) : '', customer, ...rule, search: items.length > 30, compact: isPool },
     });
     if (req.method === 'HEAD') { res.setHeader('Content-Type', 'text/html; charset=utf-8'); return res.status(200).end(); }
