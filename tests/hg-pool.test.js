@@ -127,10 +127,13 @@ test('photo order: hero first, farm display photo second, supplier after; credit
   const html = renderSections({ title: 't', groups: GROUPS, items: [it] }).sections;
   assert.match(html, /data-g="h\.attHHHHHHHHHHHHH1 f\.attFFFFFFFFFFFFF1 s\.attSSSSSSSSSSSSS1"/);
   assert.match(html, /data-cr="사진: A/);
-  assert.match(html, /class="c-ref">다 자란 모습/);
+  assert.match(html, /class="c-ref">참고 사진/);
   const [noHero] = poolItems([rec('rec0000000000000a', { ...rec2.fields, [F.hero]: [] })]);
   assert.equal(noHero.credit, '');
-  assert.ok(!/c-ref/.test(renderSections({ title: 't', groups: GROUPS, items: [noHero] }).sections));
+  // 공급사 사진도 '참고 사진'(대표사진과 한 이름) — 농장 실사가 있으면 넘겨 보기
+  const noHeroHtml = renderSections({ title: 't', groups: GROUPS, items: [noHero] }).sections;
+  assert.match(noHeroHtml, /class="c-ref">참고 사진/);
+  assert.match(noHeroHtml, /c-swipe/);
 });
 
 test('interest picker: genus label from info card title, else most common Korean first word', () => {
@@ -178,4 +181,21 @@ test('cards show a red low-stock tag and a per-variety minimum tag', () => {
   assert.match(cardOf('프랑부아진'), /data-min="1000"/);
   assert.match(cardOf('프랑부아진'), /class="tag min">최소 1,000주</);
   assert.doesNotMatch(cardOf('라임라이트'), /class="tag/);
+});
+
+test('confirmed quotes hold stock: latest confirmed revision per chain, group prefix stripped, sold-out rows drop', () => {
+  const { confirmedTotals, applyReserved } = require('../lib/hg-pool');
+  const totals = confirmedTotals([
+    { number: 'OG-20261113-002', status: '수주확정', items: [{ name: "수국 목수국 '다루마'", spec: 'P9', qty: 1000 }] },
+    { number: 'OG-20261113-002-R2', status: '수주확정', items: [{ name: "수국 목수국 '다루마'", spec: 'P9', qty: 400 }] }, // 최신 수정본만
+    { number: 'OG-20261113-003', status: '수락', items: [{ name: "꽃관목 병꽃나무 '스파클'", spec: 'P9', qty: 99 }] }, // 고객 [확정]만 — 입금 전이라 안 뺀다
+    { number: 'OG-20261113-004', status: '완료', items: [{ name: "PBR 품종 병꽃나무 '피코벨라로소'", spec: 'P9', qty: 726 }] }, // 옛 탭 이름
+    { number: 'OG-20261113-005', status: '입고대기', items: [{ name: "병꽃나무 '앰버'", spec: 'P9', qty: 24 }] }, // 탭 이름 없이
+  ]);
+  assert.equal(totals.get("수국 목수국 '다루마'|P9"), 400);
+  assert.equal(totals.has("꽃관목 병꽃나무 '스파클'|P9"), false);
+  const rec = (id, kname, size, st) => ({ id, fields: { [F.kname]: kname, [F.size]: size, [F.stock]: st } });
+  const out = applyReserved([rec('r1', "목수국 '다루마'", 'P9', 1183), rec('r2', "병꽃나무 '피코벨라로소'", 'P9', 726),
+    rec('r3', "병꽃나무 '앰버'", { name: 'P9' }, 524), rec('r4', "병꽃나무 '스파클'", 'P9', 377)], totals);
+  assert.deepEqual(out.map((r) => [r.id, r.fields[F.stock]]), [['r1', 783], ['r3', 500], ['r4', 377]]);
 });

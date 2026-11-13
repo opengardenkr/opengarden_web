@@ -22,7 +22,7 @@ const ID_RE = /^[A-Za-z0-9_-]{22}$/;
 
 function message(title, body) {
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow"><title>${esc(title)} · 오픈가든</title>
+<meta name="robots" content="noindex, nofollow"><title>${esc(title)} · 오픈가든</title><link rel="icon" href="/assets/logo_green_notext.png" type="image/png">
 <style>body{margin:0;font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:#F4F6F3;color:#111814;word-break:keep-all}
 header{background:#1F4D33;color:#fff;padding:22px 16px}header b{font-size:12px;letter-spacing:.28em;opacity:.85}
 main{max-width:520px;margin:28px auto;padding:0 16px}.box{background:#fff;border:1px solid #E4E8E3;border-radius:14px;padding:22px 16px;text-align:center}
@@ -209,7 +209,7 @@ module.exports = async (req, res) => {
     const pageUrl = `${SITE}/o/${id}`;
     const html = renderPage(spec, {
       word: '주문', unit: unitOf(items), nav, pageUrl, meta: spec.basis,
-      ogImage: `${SITE}/assets/og-order.jpg`, ogDim: true,
+      ogImage: `${SITE}/assets/${isPool ? 'og-pool.jpg' : 'og-order.jpg'}`, ogDim: true, // 카톡 미리보기: 공동수입은 농장 사진
       secure: sections, terms,
       cfg: { pid: id, title: spec.title, date: spec.date, min, minLabel: min ? minLabel(min) : '', customer, ...rule, search: items.length > 30, compact: isPool },
     });
