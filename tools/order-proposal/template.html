@@ -39,6 +39,8 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 .cards{display:grid;grid-template-columns:1fr;gap:12px}
 @media(min-width:720px){.cards{grid-template-columns:1fr 1fr}}
 .card{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+/* 화면 밖 카드는 그리기를 미룬다(품종 수백 개 주문서의 첫 화면·스크롤 속도) */
+.cards>.card{content-visibility:auto;contain-intrinsic-size:auto 360px}
 .c-photo{aspect-ratio:1/1;background:var(--soft);overflow:hidden}
 .c-photo img{width:100%;height:100%;object-fit:cover;display:block}
 .c-body{padding:14px 14px 12px;display:flex;flex-direction:column;flex:1}
@@ -200,7 +202,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 <nav class="tabs" aria-label="품목 구분"><div class="wrap">%%NAV%%</div></nav>
 <main class="wrap">
   <p class="for" id="forWho" hidden></p>
-  <p class="howto">필요한 품목에 <b>%%QTYLABEL%%</b>을 넣고 아래 <b>%%WORD%% 요청</b>을 누르면 담당자에게 바로 전달됩니다. 확인 후 견적서를 보내드립니다.</p>
+  <p class="howto">필요한 품목에 <b>%%QTYLABEL%%</b>을 넣고 아래 <b>%%WORD%% 요청</b>을 누르면 견적서가 카카오톡(안 되면 문자)으로 바로 도착합니다. 재고·납기는 담당자가 확인 후 연락드립니다.</p>
   <div class="srch" id="srchBox" hidden><input id="srch" type="search" enterkeyhint="search" placeholder="품종 검색 (예: 목수국, Limelight)" aria-label="품종 검색"><p class="srch-none" id="srchNone" hidden>찾는 품종이 없습니다</p></div>
   <div id="secure">%%SECURE%%</div>
   <section class="terms"%%TERMSHIDDEN%%><h2>거래 조건 및 안내</h2><ul>%%TERMS%%</ul></section>

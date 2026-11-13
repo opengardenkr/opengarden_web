@@ -24,7 +24,7 @@ test('pool merges sizes of one variety into one card and drops unchecked, exclud
   assert.deepEqual(h.rows[0], ['P9', 536, 4500, 0]);
   assert.deepEqual(h.feat, ['흰꽃이 분홍·와인색으로 변함', '컴팩트 수형']);
   assert.deepEqual(h.h, [120, 150]);
-  assert.equal(h.img, `/api/order-photo?id=${M1}&w=800`);
+  assert.equal(h.img, `/api/order-photo?id=${M1}&w=520`);
   assert.equal(h.imgBig, `/api/order-photo?id=${M1}&w=1600`);
   assert.equal(h.genus, 'Hydrangea pan');
   assert.equal(h.unit, '주');
@@ -113,7 +113,7 @@ test('photo order: hero first, farm display photo second, supplier after; credit
   const rec2 = rec('rec00000000000009', { [F.pool]: true, [F.sname]: "Hydrangea m. 'Tovelit'", [F.kname]: "수국 '토벨리트'", [F.size]: 'P9', [F.price]: 4500, [F.master]: [M1],
     [F.hero]: [hero], [F.credit]: ['사진: A / Wikimedia Commons · CC BY-SA 4.0'], [F.photo]: [sup1, farm] });
   const [it] = poolItems([rec2]);
-  assert.equal(it.img, `/api/order-photo?id=${M1}&w=800&v=${hero.id}`);
+  assert.equal(it.img, `/api/order-photo?id=${M1}&w=520&v=${hero.id}`);
   assert.deepEqual(it.gal, ['h.' + hero.id, 'f.' + farm.id, 's.' + sup1.id]);
   assert.equal(it.credit, '사진: A / Wikimedia Commons · CC BY-SA 4.0');
   const html = renderSections({ title: 't', groups: GROUPS, items: [it] }).sections;

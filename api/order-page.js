@@ -32,9 +32,12 @@ a{display:flex;align-items:center;justify-content:center;height:50px;border-radi
 <a href="${KAKAO}" target="_blank" rel="noopener">카카오톡 채널 열기</a></div></main></body></html>`;
 }
 
-function send(res, status, html) {
+// 정상 화면은 CDN에 60초 저장하고, 그 뒤엔 저장본을 먼저 보여 주며 뒤에서 새로 읽는다(2026-11-13 사용자 승인: 로딩 속도).
+// 재고·가격 변경은 최대 1분 늦게 보인다. 오류·마감·없음 화면은 저장하지 않는다.
+const FRESH = 'public, max-age=0, s-maxage=60, stale-while-revalidate=600';
+function send(res, status, html, cache) {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'private, no-store');
+  res.setHeader('Cache-Control', cache || 'private, no-store');
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.status(status).send(html);
 }
@@ -150,7 +153,7 @@ module.exports = async (req, res) => {
       cfg: { pid: id, title: spec.title, date: spec.date, min, minLabel: min ? minLabel(min) : '', customer, ...rule, search: items.length > 30, compact: isPool },
     });
     if (req.method === 'HEAD') { res.setHeader('Content-Type', 'text/html; charset=utf-8'); return res.status(200).end(); }
-    return send(res, 200, html);
+    return send(res, 200, html, FRESH);
   } catch (e) {
     console.error('order-page failed:', e.message);
     return send(res, 503, message('잠시 후 다시 열어 주세요', '주문서를 불러오지 못했습니다.'));

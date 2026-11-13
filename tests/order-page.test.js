@@ -97,3 +97,10 @@ test('cards with a hero and a farm photo swipe to the farm photo, loaded on dema
   const heroOnly = cards.find((c) => c.includes('선데'));
   assert.ok(!heroOnly.includes('c-swipe')); assert.match(heroOnly, /다 자란 모습/);
 });
+
+test('first cards load their photo eagerly, the rest lazily', () => {
+  const items = Array.from({ length: 6 }, (_, i) => ({ key: `rec${'P'.repeat(13)}${i}`, grp: '목수국', unit: '주', step: 10, name: `품종${i}`, img: `/api/order-photo?id=x${i}&w=520`, rows: [['P9', null, 1000, 0]] }));
+  const { sections } = renderSections({ items });
+  assert.equal((sections.match(/loading="eager" fetchpriority="high"/g) || []).length, 4);
+  assert.equal((sections.match(/loading="lazy"/g) || []).length, 2);
+});
