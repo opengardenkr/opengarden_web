@@ -116,6 +116,10 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 .d-cap{font-size:11.5px;color:var(--gray);margin:6px 2px 4px;word-break:break-all}
 .c-photo{position:relative}
 .c-ref{position:absolute;left:6px;bottom:6px;font-size:10.5px;font-weight:600;background:rgba(17,24,20,.55);color:#fff;border-radius:8px;padding:1px 6px;pointer-events:none}
+.c-swipe .c-track{display:flex;width:100%;height:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
+.c-swipe .c-track::-webkit-scrollbar{display:none}
+.c-swipe .c-track img{flex:0 0 100%;scroll-snap-align:start;background:var(--soft)}
+.c-flip{position:absolute;right:6px;bottom:6px;border:0;background:rgba(255,255,255,.94);color:var(--ink);font:inherit;font-size:11px;font-weight:700;line-height:1.5;border-radius:999px;padding:2px 9px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 #dBody .c-name{font-size:20px}
 #dBody .opts{display:block;margin-top:6px}
 #dOk{margin-top:12px;width:100%}
@@ -305,6 +309,18 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
       inp.addEventListener('focus', function(){ if (inp.value === '0') inp.select(); });
     });
     [].slice.call(document.querySelectorAll('.c-photo img')).forEach(function(im){ im.addEventListener('error', function(){ if (im._r) return; im._r = 1; setTimeout(function(){ im.src = im.src + (im.src.indexOf('?') < 0 ? '?' : '&') + 'r=1'; }, 1500); }); });
+    // 카드 사진 넘기기: 대표사진 ↔ 농장 실사 (실사는 손댈 때 처음 받는다)
+    [].slice.call(document.querySelectorAll('.c-swipe')).forEach(function(p){
+      var tr = p.querySelector('.c-track'), alt = p.querySelector('.c-alt'), lab = p.querySelector('.c-ref'), bt = p.querySelector('.c-flip');
+      if (!tr || !alt || !bt) return;
+      var load = function(){ if (!alt.getAttribute('src') && alt.dataset.src) alt.src = alt.dataset.src; };
+      var onFarm = function(){ return tr.scrollLeft > tr.clientWidth / 2; };
+      var paint = function(){ var f = onFarm(); if (lab) lab.textContent = f ? '농장 실사' : '다 자란 모습'; bt.textContent = f ? '‹ 대표사진' : '농장 실사 ›'; bt.setAttribute('aria-label', f ? '대표사진 보기' : '농장 실사 보기'); };
+      tr.addEventListener('touchstart', load, { passive: true });
+      tr.addEventListener('pointerdown', load);
+      tr.addEventListener('scroll', function(){ load(); clearTimeout(tr._t); tr._t = setTimeout(paint, 80); }, { passive: true });
+      bt.addEventListener('click', function(e){ e.stopPropagation(); load(); tr.scrollTo({ left: onFarm() ? 0 : tr.clientWidth, behavior: 'smooth' }); });
+    });
     if (CFG.compact) setupCompact();
     if (CFG.search) setupSearch();
     update();
@@ -331,7 +347,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
       var m = document.createElement('div'); m.className = 'c-mini';
       m.innerHTML = '<b></b><span class="q" hidden></span>'; m.firstChild.textContent = minPrice(c);
       c.querySelector('.c-body').insertBefore(m, c.querySelector('.opts'));
-      c.addEventListener('click', function(e){ if (!e.target.closest('.opts')) openCard(c); });
+      c.addEventListener('click', function(e){ if (!e.target.closest('.opts, .c-flip')) openCard(c); });
     });
     $('dBg').addEventListener('click', function(){ closeD(); });
     $('dX').addEventListener('click', function(){ closeD(); });
