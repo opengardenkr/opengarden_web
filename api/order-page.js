@@ -99,24 +99,92 @@ function toGroups(raw) {
     .map((g) => [g[0].trim().slice(0, 30), g[1]]);
 }
 
+/** 주문 링크 한 줄(필드ID → 값). 없으면 null. */
+async function readLink(id) {
+  const url = new URL(`https://api.airtable.com/v0/${BASE}/${TABLE}`);
+  url.searchParams.set('returnFieldsByFieldId', 'true');
+  url.searchParams.set('maxRecords', '1');
+  url.searchParams.set('filterByFormula', `{링크ID}="${id}"`); // id는 ID_RE로 [A-Za-z0-9_-]만 허용
+  Object.values(F).forEach((f) => url.searchParams.append('fields[]', f));
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` }, signal: AbortSignal.timeout(10000), cache: 'no-store' });
+  if (!r.ok) throw new Error(`Airtable ${r.status}`);
+  const rec = ((await r.json()).records || [])[0];
+  const f = rec ? rec.fields || {} : null;
+  return f && f[F.id] === id ? f : null;
+}
+const statusOf = (f) => (f[F.status] && typeof f[F.status] === 'object' ? f[F.status].name : f[F.status]);
+
+// ── 관심 수목 조사: 손님이 주문서 첫 화면에서 고른 수목(POST /o/<링크ID>) ─────────────
+// 한 번 고를 때(바꾸면 또) 한 줄. IP·연락처는 저장하지 않는다 — 방문자는 브라우저가 만든 무작위 번호.
+const SURVEY = 'tblekVLA2t0MBlKds'; // [영업] 관심 수목 조사
+const SV = {
+  title: 'fldWggb3xGpcs0TVi', picks: 'fldk28X2Zx3rEuM0H', n: 'fldEokM2g2l0KS5Vs', link: 'fld68wFWK7iAKnLmp',
+  name: 'fldf1toLEj9KLqbX3', device: 'fldISJ6fhiDcdWhk6', visitor: 'fldqfI9586GexsEuL', at: 'fldg46sBQovryJLls',
+};
+const LABEL_RE = /^[가-힣A-Za-z0-9 ·'().-]{1,30}$/;
+
+/** 조사 본문 검사 → { picks, visitor } 또는 null */
+function surveyInput(body) {
+  const b = body && typeof body === 'object' ? body : {};
+  const picks = [...new Set((Array.isArray(b.picks) ? b.picks : []).map((x) => (typeof x === 'string' ? x.trim() : '')))];
+  if (!picks.length || picks.length > 20 || !picks.every((x) => LABEL_RE.test(x))) return null;
+  const visitor = typeof b.visitor === 'string' && /^[a-z0-9]{8,24}$/.test(b.visitor) ? b.visitor : '';
+  return { picks, visitor };
+}
+
+// 같은 인스턴스에서 IP당 10분에 10번까지(장난 막기). IP는 메모리에만 잠깐 두고 저장하지 않는다.
+const hits = new Map();
+function limited(ip, now = Date.now()) {
+  const list = (hits.get(ip) || []).filter((t) => now - t < 600000);
+  list.push(now);
+  hits.set(ip, list);
+  if (hits.size > 5000) hits.clear();
+  return list.length > 10;
+}
+
+async function recordSurvey(req, res, id) {
+  res.setHeader('Cache-Control', 'no-store');
+  const input = surveyInput(req.body);
+  if (!input) return res.status(400).json({ error: 'picks' });
+  const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'local';
+  if (limited(ip)) return res.status(429).json({ error: 'slow down' });
+  if (!BASE || !TOKEN) return res.status(503).json({ error: 'unavailable' });
+  try {
+    const f = await readLink(id);
+    if (!f || statusOf(f) === '마감') return res.status(404).json({ error: 'link' });
+    const ua = String(req.headers['user-agent'] || '');
+    const fields = {
+      [SV.title]: input.picks.join(' · ').slice(0, 200), [SV.picks]: input.picks, [SV.n]: input.picks.length, [SV.link]: id,
+      [SV.name]: String(f[F.title] || '').slice(0, 80), [SV.device]: /Mobi|Android|iPhone|iPad/i.test(ua) ? '폰' : 'PC',
+      [SV.visitor]: input.visitor, [SV.at]: new Date().toISOString(),
+    };
+    const post = (flds) => fetch(`https://api.airtable.com/v0/${BASE}/${SURVEY}`, {
+      method: 'POST', headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: [{ fields: flds }], typecast: true }), signal: AbortSignal.timeout(10000),
+    });
+    let r = await post(fields);
+    if (!r.ok) { // 새 수목 이름을 선택지로 못 만들면(권한) 글자로만 남긴다
+      const { [SV.picks]: _drop, ...rest } = fields;
+      r = await post(rest);
+    }
+    if (!r.ok) throw new Error(`Airtable ${r.status}`);
+    return res.status(204).end();
+  } catch (e) {
+    console.error('order-page survey failed:', e.message);
+    return res.status(500).json({ error: 'survey failed' });
+  }
+}
+
 module.exports = async (req, res) => {
-  if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(405).end();
+  if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'POST') return res.status(405).end();
   const id = typeof req.query.id === 'string' ? req.query.id : '';
+  if (req.method === 'POST') return ID_RE.test(id) ? recordSurvey(req, res, id) : res.status(404).json({ error: 'link' });
   if (!ID_RE.test(id)) return send(res, 404, message('주문서를 찾을 수 없습니다', '받으신 링크를 다시 확인해 주세요.'));
   if (!BASE || !TOKEN) return send(res, 503, message('잠시 후 다시 열어 주세요', '주문서를 불러오지 못했습니다.'));
   try {
-    const url = new URL(`https://api.airtable.com/v0/${BASE}/${TABLE}`);
-    url.searchParams.set('returnFieldsByFieldId', 'true');
-    url.searchParams.set('maxRecords', '1');
-    url.searchParams.set('filterByFormula', `{링크ID}="${id}"`); // id는 위에서 [A-Za-z0-9_-]만 허용
-    Object.values(F).forEach((f) => url.searchParams.append('fields[]', f));
-    const r = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` }, signal: AbortSignal.timeout(10000), cache: 'no-store' });
-    if (!r.ok) throw new Error(`Airtable ${r.status}`);
-    const rec = ((await r.json()).records || [])[0];
-    const f = rec ? rec.fields || {} : null;
-    if (!f || f[F.id] !== id) return send(res, 404, message('주문서를 찾을 수 없습니다', '받으신 링크를 다시 확인해 주세요.'));
-    const status = f[F.status] && typeof f[F.status] === 'object' ? f[F.status].name : f[F.status];
-    if (status === '마감') return send(res, 410, message('마감된 주문서입니다', '새 주문서가 필요하시면 카카오톡 채널로 알려주세요.'));
+    const f = await readLink(id);
+    if (!f) return send(res, 404, message('주문서를 찾을 수 없습니다', '받으신 링크를 다시 확인해 주세요.'));
+    if (statusOf(f) === '마감') return send(res, 410, message('마감된 주문서입니다', '새 주문서가 필요하시면 카카오톡 채널로 알려주세요.'));
 
     // 공동수입 주문서: 품목JSON = {"v":1,"src":"hg-pool","minEach":200,"minTotal":600} — 품목은 호게나르드 DM에서 바로 읽는다
     const raw = JSON.parse(f[F.items] || '{}');
@@ -163,3 +231,5 @@ module.exports = async (req, res) => {
 module.exports.toItems = toItems;
 module.exports.toGroups = toGroups;
 module.exports.qtyRule = qtyRule;
+module.exports.surveyInput = surveyInput;
+module.exports.limited = limited;

@@ -124,3 +124,31 @@ test('photo order: hero first, farm display photo second, supplier after; credit
   assert.equal(noHero.credit, '');
   assert.ok(!/c-ref/.test(renderSections({ title: 't', groups: GROUPS, items: [noHero] }).sections));
 });
+
+test('interest picker: genus label from info card title, else most common Korean first word', () => {
+  const { genusLabels } = require('../lib/hg-pool');
+  const items = [
+    { genus: 'Hydrangea pan', name: "목수국 '라임라이트'" }, { genus: 'Cotinus', name: "안개나무 '로얄퍼플'" },
+    { genus: 'Cotinus', name: "안개나무 '골든스피릿'" }, { genus: 'Cotinus', name: '자주안개나무' }, { genus: 'Thuja', name: "Thuja occ. 'Danica'" },
+  ];
+  const info = new Map([['Hydrangea pan', { title: '목수국 (Hydrangea paniculata)' }]]);
+  const m = genusLabels(items, info);
+  assert.equal(m.get('Hydrangea pan'), '목수국');
+  assert.equal(m.get('Cotinus'), '안개나무');
+  assert.equal(m.get('Thuja'), 'Thuja');
+  const html = renderSections({ items: poolItems(records), groups: GROUPS }).sections;
+  assert.match(html, /data-ik="Hydrangea pan" data-il="목수국"/);
+});
+
+test('interest survey input is validated and rate-limited', () => {
+  const { surveyInput, limited } = require('../api/order-page');
+  assert.deepEqual(surveyInput({ picks: ['목수국', '안개나무', '목수국'], visitor: 'abc123def456' }), { picks: ['목수국', '안개나무'], visitor: 'abc123def456' });
+  assert.equal(surveyInput({ picks: [] }), null);
+  assert.equal(surveyInput({ picks: ['<script>'] }), null);
+  assert.equal(surveyInput({ picks: Array.from({ length: 21 }, (_, i) => '수목' + i) }), null);
+  assert.equal(surveyInput({ picks: ['목수국'], visitor: 'BAD!' }).visitor, '');
+  let hit = false;
+  for (let i = 0; i < 11; i++) hit = limited('1.2.3.4', 1000 + i);
+  assert.equal(hit, true);
+  assert.equal(limited('5.6.7.8', 1000), false);
+});
