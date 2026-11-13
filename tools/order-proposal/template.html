@@ -532,7 +532,7 @@ body.obopen{overflow:hidden}
         + (CFG.minTotal ? ' 전체 ' + fmt(CFG.minTotal) + u + '부터 주문됩니다.' : '')
         + (CFG.min ? ' 최소 주문은 ' + CFG.minLabel + '입니다.' : '')
         + (document.querySelector('.tag.min') ? ' 「최소」 태그가 붙은 품종은 그 수량부터입니다.' : '')
-        + (document.querySelector('.tag.low') ? ' 「품절임박」은 남은 재고가 적은 품종입니다.' : '')
+        + (document.querySelector('.tag.low') ? ' 「품절임박」은 남은 재고가 적은 품종으로, 품종당 최소 수량 없이 담을 수 있습니다.' : '')
         + ' 담은 금액은 아래에 바로 더해집니다.'],
       [W + ' 요청 → 견적서가 카톡으로', '아래 [' + W + ' 요청하기]를 누르고 연락처만 넣으면 끝. 견적서가 카카오톡(안 되면 문자)으로 바로 도착합니다. 견적서에서 [확정]하고 입금하시면 주문이 확정됩니다.']
     ];
@@ -637,6 +637,7 @@ body.obopen{overflow:hidden}
   function minOf(k){
     var c = document.getElementById('i-' + k), base = CFG.minEach || 0;
     if (!c) return base;
+    if (c.dataset.low) return 0; // 품절임박: 품종당 최소 없이 담는다(주문 전체 최소는 그대로)
     var m = Math.max(base, +c.dataset.min || 0), cap = +c.dataset.cap || 0;
     return cap && cap < m ? cap : m;
   }
@@ -740,11 +741,11 @@ body.obopen{overflow:hidden}
   function setQty(o, q){
     var max = parseInt(o.dataset.max, 10);
     var w = o.querySelector('.o-warn'), u = unitOf(o), msg = '';
-    // CFG.step(예: 40)이 있으면 규격 줄 수량은 그 배수만 — 손으로 넣은 수는 위로 맞추고, 재고를 넘으면 재고 안의 배수로
-    var s = CFG.step && !o.dataset.pack ? stepOf(o) : 0, top = max ? (s ? Math.floor(max / s) * s : max) : 0;
+    // 단위(CFG.step, 예: 40)의 배수로 맞춘다. 단 남은 재고 전량은 단위와 상관없이 받는다(품절임박 마지막 물량)
+    var s = CFG.step && !o.dataset.pack ? stepOf(o) : 0, top = max || 0;
     q = Math.max(0, Math.round(q) || 0);
-    if (s && q % s) { q = Math.ceil(q / s) * s; msg = fmt(s) + u + ' 단위로 맞췄습니다 (' + fmt(q) + u + ')'; }
-    if (max && q > max) { q = top; msg = '재고 ' + fmt(max) + u + (s && top !== max ? ' — ' + fmt(s) + u + ' 단위로 ' + fmt(top) + u + '까지 가능합니다' : '까지 가능합니다'); }
+    if (s && q % s && !(max && q === max)) { q = Math.ceil(q / s) * s; msg = fmt(s) + u + ' 단위로 맞췄습니다 (' + fmt(Math.min(q, max || q)) + u + ')'; }
+    if (max && q > max) { q = max; msg = '재고 ' + fmt(max) + u + ' 전량까지 가능합니다'; }
     w.textContent = msg; w.hidden = !msg;
     o.querySelector('input').value = q;
     o.classList.toggle('on', q > 0);
