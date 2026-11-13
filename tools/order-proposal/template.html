@@ -196,7 +196,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
   <div class="meta">%%DATE%% · %%BASIS%%</div>
 </div></header>
 <div class="notice"><div class="wrap"><ul>
-  <li>판매가 <b>%%PRICEUNIT%% · VAT 별도</b></li>
+  <li>판매가 <b>%%PRICEUNIT%%</b></li>
   %%NOTICE%%
 </ul></div></div>
 <nav class="tabs" aria-label="품목 구분"><div class="wrap">%%NAV%%</div></nav>
@@ -210,7 +210,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 </main>
 
 <div class="bar" id="bar"><div class="wrap">
-  <div class="bar-top"><span class="bar-count" id="cnt">선택한 품목이 없습니다</span><span class="bar-total" id="tot">₩0<small>VAT 별도</small></span></div>
+  <div class="bar-top"><span class="bar-count" id="cnt">선택한 품목이 없습니다</span><span class="bar-total" id="tot">₩0</span></div>
   <div class="prog" id="prog" aria-hidden="true"><i id="progI"></i></div>
   <div class="prog-txt" id="progT"></div>
   <button class="btn-go" id="go" disabled>%%WORD%% 요청하기</button>
@@ -226,7 +226,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
     <form id="form" novalidate>
       <div class="field"><label for="fName">상호 / 성함</label><input id="fName" autocomplete="organization" maxlength="100" placeholder="예: ○○조경 홍길동"></div>
       <div class="field"><label for="fPhone">연락처 <em>*</em></label><input id="fPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="010-0000-0000" required></div>
-      <div class="field"><label for="fMemo">요청사항</label><textarea id="fMemo" maxlength="800" placeholder="납품지, 희망 일정 등"></textarea></div>
+      <div class="field"><label for="fMemo">요청사항</label><textarea id="fMemo" maxlength="800" placeholder="납품지 등"></textarea></div>
       <div class="hp" aria-hidden="true"><input id="fWeb" tabindex="-1" autocomplete="off"></div>
       <label class="agree"><input type="checkbox" id="fAgree"><span><b>(필수)</b> 개인정보 수집·이용에 동의합니다.<small>연락처·성함/소속·요청 사항·품목을 견적 및 납품 진행 목적으로 3년간 보관합니다. 거부하실 수 있으며 이 경우 접수가 제한됩니다. <a href="/privacy.html" target="_blank" rel="noopener">자세히 보기</a></small></span></label>
       <p class="err" id="err" role="alert"></p>
@@ -455,7 +455,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
   function update(){
     var list = picked(), total = list.reduce(function(s,i){ return s + i.amt; }, 0);
     $('cnt').textContent = list.length ? '선택 ' + list.length + '개 품목' + (CFG.unit ? ' · ' + fmt(list.reduce(function(s,i){return s+i.qty;},0)) + CFG.unit : '') : '선택한 품목이 없습니다';
-    $('tot').innerHTML = '₩' + fmt(total) + '<small>VAT 별도</small>';
+    $('tot').textContent = '₩' + fmt(total);
     var t = $('progT');
     // 수량 규칙: 품종당 최소(minEach) · 전체 최소(minTotal)
     var short = 0, qty = list.reduce(function(s,i){ return s + i.bulbs; }, 0);
@@ -501,7 +501,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
       li.appendChild(a); li.appendChild(b); sum.appendChild(li);
     });
     var tl = document.createElement('li'); tl.className = 'tot';
-    tl.innerHTML = '<span>합계 (VAT 별도)</span><span>₩' + fmt(st.total) + '</span>';
+    tl.innerHTML = '<span>합계</span><span>₩' + fmt(st.total) + '</span>';
     sum.appendChild(tl);
     var below = $('below');
     if (CFG.min && st.total < CFG.min) { below.textContent = '최소 주문 금액은 ' + CFG.minLabel + '입니다. 그대로 요청하시면 담당자가 조정안을 안내드립니다.'; below.hidden = false; }
@@ -517,7 +517,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
   function summaryText(no, st){
     return '[오픈가든 ' + CFG.word + ' 요청 ' + no + ']\n' + CFG.title + '\n'
       + st.list.map(function(i){ return '· ' + i.name + ' ' + i.spec + ' × ' + i.label + ' = ₩' + fmt(i.amt); }).join('\n')
-      + '\n합계 ₩' + fmt(st.total) + ' (VAT 별도)';
+      + '\n합계 ₩' + fmt(st.total);
   }
 
   $('form').addEventListener('submit', function(e){
@@ -528,7 +528,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
     if (!$('fAgree').checked) { err.textContent = '개인정보 수집·이용에 동의해주세요.'; return; }
     if (!st.list.length) { err.textContent = '수량을 입력한 품목이 없습니다.'; return; }
     var memo = '[' + (CFG.word === '주문' ? '주문 링크 ' : '제안서 ') + CFG.pid + '] ' + CFG.title + ' (' + CFG.date + ')' + (CUSTOMER && CUSTOMER.name ? ' · ' + CUSTOMER.name + ' 전용' : '') + '\n'
-      + '합계 ₩' + fmt(st.total) + ' (VAT 별도)' + (CFG.min && st.total < CFG.min ? ' · 최소 주문 ' + CFG.minLabel + ' 미달' : '')
+      + '합계 ₩' + fmt(st.total) + (CFG.min && st.total < CFG.min ? ' · 최소 주문 ' + CFG.minLabel + ' 미달' : '')
       + ($('fMemo').value.trim() ? '\n고객 메모: ' + $('fMemo').value.trim() : '');
     var body = {
       name: $('fName').value.trim(), phone: phone, memo: memo, agree: true, marketing: false, website: $('fWeb').value,
