@@ -165,6 +165,8 @@ test('cards show a red low-stock tag and a per-variety minimum tag', () => {
   const cardOf = (name) => html.split('<article').find((x) => x.includes(name));
   assert.match(cardOf('레드바론'), /data-cap="51"/);
   assert.match(cardOf('레드바론'), /class="tag low">품절임박</);
+  assert.match(cardOf('레드바론'), /data-low="1"/);
+  assert.doesNotMatch(cardOf('프랑부아진'), /data-low/);
   assert.match(cardOf('프랑부아진'), /data-min="1000"/);
   assert.match(cardOf('프랑부아진'), /class="tag min">최소 1,000주</);
   assert.doesNotMatch(cardOf('라임라이트'), /class="tag/);
