@@ -72,11 +72,11 @@ test('issueVars fills every template variable and keeps the item list short', ()
   const v = doc.viewOf(rec('recA', quoteFields()));
   const vars = doc.issueVars(v, { name: '금성농원', key: 'k'.repeat(22) });
   assert.deepEqual(Object.keys(vars).sort(), ['#{견적번호}', '#{고객명}', '#{링크}', '#{유효기간}', '#{품목요약}', '#{합계}'].sort());
-  assert.equal(vars['#{합계}'], '₩1,101,100 (부가세 포함)');
+  assert.equal(vars['#{합계}'], '₩1,101,100'); // 면세·부가세 표기는 붙이지 않는다
   assert.match(vars['#{품목요약}'], /^1\. 목수국 라임라이트 \(P9\) 200주/);
-  const many = { ...v, items: Array.from({ length: 80 }, (_, i) => ({ name: `품종 이름이 긴 편인 식물 ${i}`, spec: 'P9', qty: 200, price: 1 })) };
+  const many = { ...v, items: Array.from({ length: 80 }, (_, i) => ({ name: `품종 ${i}`, spec: 'P9', qty: 200, price: 1 })) };
   const long = doc.issueVars(many, { name: 'x', key: 'k' })['#{품목요약}'];
-  assert.ok(long.length <= 600); assert.match(long, /외 \d+품목$/);
+  assert.equal(long, '1. 품종 0 (P9) 200주\n2. 품종 1 (P9) 200주\n3. 품종 2 (P9) 200주\n외 77품목'); // 세 줄 + 외 N품목
 });
 
 test('eligible only accepts fresh, fully priced automatic drafts', () => {
@@ -165,8 +165,11 @@ test('quote page renders escaped items, totals and noindex', async () => {
     await view({ method: 'GET', query: { key: KEY } }, res);
     assert.equal(res.statusCode, 200);
     assert.equal(res.headers['x-robots-tag'], 'noindex, nofollow');
-    assert.match(res.body, /OG-20261111-001/); assert.match(res.body, /₩1,101,100/); assert.match(res.body, /이대로 확정하기/);
+    assert.match(res.body, /OG-20261111-001/); assert.match(res.body, /1,101,100<small> 원<\/small>/); assert.match(res.body, /이대로 확정하기/);
+    assert.match(res.body, /class="qtitle">견 적 서/); assert.match(res.body, /\/assets\/q\/logo\.png/); assert.match(res.body, /\/assets\/q\/seal\.png/);
     assert.ok(!res.body.includes('<script>x</script>')); assert.ok(!res.body.includes('어딘가 주소')); // 품목 이스케이프 · 공급자 주소 비노출
+    assert.ok(!res.body.includes('요청번호')); // 내부 요청번호는 비고에 싣지 않는다
+    assert.match(res.body, /납품 일정은 바꿀 수 없습니다/);
   });
   const res = mockRes();
   await view({ method: 'GET', query: { key: 'short' } }, res);
@@ -211,4 +214,19 @@ test('order-link orders skip the immediate receipt alimtalk (quote-issue sends o
       assert.equal(calls.filter((c) => c.url.hostname === 'api.solapi.com').length, 1);
     });
   } finally { delete process.env.SOLAPI_API_KEY; delete process.env.SOLAPI_API_SECRET; delete process.env.SOLAPI_PFID; delete process.env.SOLAPI_TEMPLATE_ID; }
+});
+
+test('tax-exempt quotes show only the total, without any 면세 wording', () => {
+  const snap = { ...SNAP, footerNotes: '· 본 견적의 유효기간은 발행일로부터 14일입니다.\n· 표기 금액은 면세 기준입니다.' };
+  const v = doc.viewOf(rec('recA', quoteFields({ [Q.vat]: 0, [Q.total]: 1001000, [Q.tax]: { name: '면세' }, [Q.snap]: JSON.stringify(snap) })), '2026-11-11');
+  const html = doc.sheetHtml(v);
+  assert.ok(!html.includes('면세')); assert.ok(!html.includes('qtax-summary')); assert.match(html, /1,001,000<small> 원/);
+});
+
+test('long quotes split into A4 pages with the totals on the last page', () => {
+  const snap = { ...SNAP, rowsPerPage: 10, items: Array.from({ length: 23 }, (_, i) => ({ name: `품종${i}`, spec: 'P9', qty: 10, price: 100 })) };
+  const html = doc.sheetHtml(doc.viewOf(rec('recA', quoteFields({ [Q.snap]: JSON.stringify(snap) })), '2026-11-11'));
+  assert.equal((html.match(/class="qpage"/g) || []).length, 3);
+  assert.equal((html.match(/class="qtotal-line"/g) || []).length, 1);
+  assert.match(html, /다음 쪽에 이어집니다 \(1\/3\)/);
 });

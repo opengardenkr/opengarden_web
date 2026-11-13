@@ -77,3 +77,30 @@ test('crate rows are ordered in crates and sent in bulbs', () => {
   assert.match(sections, /data-pack="" data-max="200" data-step="10" data-unit="구"/);
   assert.equal(unitOf(items), '');
 });
+
+test('cards with a hero and a farm photo swipe to the farm photo, loaded on demand', () => {
+  const A = (c) => 'att' + c.repeat(14);
+  const base = { grp: '목수국', unit: '주', step: 10, rows: [['P9', null, 4500, 0]] };
+  const { sections } = renderSections({ items: [
+    { ...base, key: 'recHEROFARM000001', name: '라임라이트', img: `/api/order-photo?id=recHEROFARM000001&w=800&v=${A('H')}`, gal: [`h.${A('H')}`, `f.${A('F')}`] },
+    { ...base, key: 'recFARMONLY000001', name: '바닐라', img: `/api/order-photo?id=recFARMONLY000001&w=800&v=${A('F')}`, gal: [`f.${A('F')}`] },
+    { ...base, key: 'recHEROONLY000001', name: '선데', img: `/api/order-photo?id=recHEROONLY000001&w=800&v=${A('H')}`, gal: [`h.${A('H')}`, `s.${A('S')}`] },
+  ] });
+  const cards = sections.split('<article').slice(1);
+  const swipe = cards.find((c) => c.includes('라임라이트'));
+  assert.match(swipe, /class="c-photo c-swipe"/);
+  assert.ok(swipe.includes(`data-src="/api/order-photo?id=recHEROFARM000001&amp;w=800&amp;a=${A('F')}&amp;v=${A('F')}"`));
+  assert.ok(!/class="c-alt" src=/.test(swipe)); // 실사는 넘길 때 받는다
+  assert.match(swipe, /농장 실사 ›/);
+  const farmOnly = cards.find((c) => c.includes('바닐라'));
+  assert.ok(!farmOnly.includes('c-swipe')); assert.match(farmOnly, /<span class="c-ref">농장 실사<\/span>/);
+  const heroOnly = cards.find((c) => c.includes('선데'));
+  assert.ok(!heroOnly.includes('c-swipe')); assert.match(heroOnly, /다 자란 모습/);
+});
+
+test('first cards load their photo eagerly, the rest lazily', () => {
+  const items = Array.from({ length: 6 }, (_, i) => ({ key: `rec${'P'.repeat(13)}${i}`, grp: '목수국', unit: '주', step: 10, name: `품종${i}`, img: `/api/order-photo?id=x${i}&w=520`, rows: [['P9', null, 1000, 0]] }));
+  const { sections } = renderSections({ items });
+  assert.equal((sections.match(/loading="eager" fetchpriority="high"/g) || []).length, 4);
+  assert.equal((sections.match(/loading="lazy"/g) || []).length, 2);
+});
