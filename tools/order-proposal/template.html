@@ -43,7 +43,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 /* 화면 밖 카드는 그리기를 미룬다(품종 수백 개 주문서의 첫 화면·스크롤 속도) */
 .cards>.card{content-visibility:auto;contain-intrinsic-size:auto 360px}
 .c-photo{aspect-ratio:1/1;background:var(--soft);overflow:hidden}
-.c-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.c-photo img{width:100%;height:100%;object-fit:contain;display:block;background:var(--soft)}
 .c-body{padding:14px 14px 12px;display:flex;flex-direction:column;flex:1}
 .c-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .c-grp{font-size:12px;font-weight:700;color:var(--leaf);letter-spacing:.06em}
@@ -114,7 +114,7 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 .dopen .dbg{display:block} .dopen .dsheet{transform:none} .dopen{overflow:hidden}
 .d-x{position:sticky;top:0;display:block;margin:0 6px -36px auto;width:36px;height:36px;border:0;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 1px 4px rgba(0,0,0,.18);font-size:22px;color:var(--ink);z-index:3}
 .d-photo{margin:4px 0 10px;border-radius:12px;overflow:hidden;background:var(--soft)}
-.d-photo img{width:100%;max-height:52vh;object-fit:cover;display:block}
+.d-photo img{width:100%;max-height:52vh;object-fit:contain;display:block}
 .d-photo:has(.d-tabs){overflow:visible;background:none;border-radius:0}
 .d-tabs{display:flex;gap:6px;margin:0 48px 8px 0}
 .d-tabs button{flex:0 0 auto;border:1px solid var(--line,#dfe5dc);background:#fff;color:var(--ink);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;font-weight:700}
