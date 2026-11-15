@@ -199,3 +199,22 @@ test('confirmed quotes hold stock: latest confirmed revision per chain, group pr
     rec('r3', "병꽃나무 '앰버'", { name: 'P9' }, 524), rec('r4', "병꽃나무 '스파클'", 'P9', 377)], totals);
   assert.deepEqual(out.map((r) => [r.id, r.fields[F.stock]]), [['r1', 783], ['r3', 500], ['r4', 377]]);
 });
+
+test('hardiness survives master lookup, requires a safe source and stays in compact cards and details', () => {
+  const r = structuredClone(records[0]);
+  r.fields[F.hardiness] = { valuesByLinkedRecordId: { [M1]: ['USDA Zone 4–8'] } };
+  r.fields[F.hardinessSource] = ['https://example.org/cultivar'];
+  const [item] = poolItems([r]);
+  assert.equal(item.hardiness, 'USDA Zone 4–8');
+  const html = card(item);
+  assert.match(html, /내한성 · USDA Zone 4–8/);
+  assert.match(html, /href="https:\/\/example.org\/cultivar"/);
+  assert.match(card({ ...item, hardinessSource: 'javascript:alert(1)' }), /내한성 · 확인 중/);
+  assert.doesNotMatch(card({ ...item, hardinessSource: 'javascript:alert(1)' }), /javascript:/);
+  r.fields[F.review] = ['확인 필요'];
+  assert.equal(poolItems([r])[0].hardiness, '');
+  const fs = require('fs');
+  const template = fs.readFileSync(require('path').join(__dirname, '../tools/order-proposal/template.html'), 'utf8');
+  assert.match(template, /'\.c-hard'/);
+  assert.match(template, /\.compact \.card \.hard-detail\{display:none\}/);
+});
