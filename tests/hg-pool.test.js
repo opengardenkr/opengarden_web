@@ -236,6 +236,17 @@ test('hardiness survives master lookup, requires a safe source and stays in comp
   assert.doesNotMatch(card({ ...item, hardinessSource: 'javascript:alert(1)' }), /javascript:/);
   r.fields[F.review] = ['확인 필요'];
   assert.equal(poolItems([r])[0].hardiness, '');
+  r.fields[F.hardinessVerified] = ['USDA Zone 4–8\nhttps://example.org/cultivar'];
+  const [verified] = poolItems([r]);
+  assert.equal(verified.hardiness, 'USDA Zone 4–8');
+  assert.deepEqual(verified.feat, []);
+  assert.equal(verified.h, null);
+  assert.match(card(verified), /내한성 · USDA Zone 4–8/);
+  r.fields[F.hardinessSource] = ['https://example.org/changed'];
+  assert.equal(poolItems([r])[0].hardiness, '');
+  r.fields[F.hardinessSource] = ['https://example.org/cultivar'];
+  r.fields[F.hardiness] = ['USDA Zone 6'];
+  assert.equal(poolItems([r])[0].hardiness, '');
   const fs = require('fs');
   const template = fs.readFileSync(require('path').join(__dirname, '../tools/order-proposal/template.html'), 'utf8');
   assert.match(template, /'\.c-hard'/);
