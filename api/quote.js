@@ -12,6 +12,7 @@ const BASE = process.env.AIRTABLE_BASE_ID;
 const QTABLE = process.env.AIRTABLE_QUOTE_TABLE || '견적요청';
 const TOKEN = process.env.AIRTABLE_TOKEN;
 const { ORDER_MEMO } = require('../lib/quote-doc');
+const { F: LINK, readLink, statusOf } = require('../lib/order-link');
 
 // ── 솔라피 알림톡: 접수 확인 메시지를 고객 폰으로 발송 ──
 // 환경변수(SOLAPI_*)가 하나라도 없으면 조용히 건너뜀 → 미설정 상태에서도 접수는 정상 동작.
@@ -57,6 +58,13 @@ module.exports = async (req, res) => {
     const fromOrder = typeof memo === 'string' && ORDER_MEMO.test(memo) && items.length > 0;
     const qualification = fromOrder ? { memo: memo.trim().slice(0, 1000) } : qualifyInquiry(req.body);
     if (qualification.error) return res.status(400).json({ error: qualification.error });
+    // 마감한 주문 링크: 주문 페이지는 CDN 저장본이 한동안 남아(api/order-page.js FRESH) 접수에서 한 번 더 막는다.
+    // 링크를 못 읽으면(에어테이블 오류) 막지 않는다 — 주문을 잃는 쪽이 더 나쁘다.
+    const linkId = fromOrder ? (/^\[주문 링크 ([A-Za-z0-9_-]{22})\] /.exec(memo) || [])[1] : '';
+    if (linkId) {
+      const link = await readLink(linkId, [LINK.status]).catch(() => null);
+      if (link && statusOf(link) === '마감') return res.status(410).json({ error: '마감된 주문서입니다. 새 주문서가 필요하시면 카카오톡 채널로 알려주세요.' });
+    }
 
     // 입력값 정리 (길이 제한 + 수량 범위 강제)
     const clean = items.slice(0, 100).map((i) => ({
