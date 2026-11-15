@@ -8,17 +8,12 @@ const { renderSections, renderPage, esc, unitOf } = require('../lib/order-page')
 const { GROUPS } = require('../lib/catalog-data');
 const pool = require('../lib/hg-pool');
 
+const { F, ID_RE, readLink, statusOf } = require('../lib/order-link');
+
 const BASE = process.env.AIRTABLE_BASE_ID;
 const TOKEN = process.env.AIRTABLE_TOKEN;
-const TABLE = process.env.AIRTABLE_ORDER_LINK_TABLE || 'tbl93mrTsG1IsuFxQ'; // [영업] 주문 링크
-const F = {
-  id: 'fldQCUWu9EOsbUiYh', title: 'fldYfnhpKeszp9cQz', customer: 'fldL7PcPMwAPfwJGu', phone: 'fldiCkG6ut9h4O1Yv',
-  items: 'fldNQStXwVIQUHwwj', min: 'fldhAQfABDEOjzb6Q', date: 'flda0UPGBrXXhMRey', status: 'fldwdqHacxGXwd6RT',
-  memo: 'fldt7o3g960vHTY2n',
-};
 const SITE = 'https://open-garden.co.kr';
 const KAKAO = 'https://pf.kakao.com/_lGfxhX/chat';
-const ID_RE = /^[A-Za-z0-9_-]{22}$/;
 
 function message(title, body) {
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -33,8 +28,11 @@ a{display:flex;align-items:center;justify-content:center;height:50px;border-radi
 }
 
 // 정상 화면은 CDN에 60초 저장하고, 그 뒤엔 저장본을 먼저 보여 주며 뒤에서 새로 읽는다(2026-11-13 사용자 승인: 로딩 속도).
-// 재고·가격 변경은 최대 1분 늦게 보인다. 오류·마감·없음 화면은 저장하지 않는다.
-const FRESH = 'public, max-age=0, s-maxage=60, stale-while-revalidate=600';
+// 저장본을 먼저 보이는 기간을 10분 → 하루로(2026-11-15 사용자 요청: "처음 로딩이 너무 길다").
+// 손님이 뜸하면 10분 뒤 첫 손님마다 에어테이블을 처음부터 읽어 3초쯤 빈 화면이었다(실측 MISS 2.4초 + 내려받기).
+// 대신 한동안 손님이 없다가 온 첫 사람은 마지막 저장본을 보고, 그 사이 뒤에서 새로 읽어 다음 사람부터 새 내용이다.
+// 마감한 링크로 저장본에서 주문해도 /api/quote가 마감을 확인해 받지 않는다. 오류·마감·없음 화면은 저장하지 않는다.
+const FRESH = 'public, max-age=0, s-maxage=60, stale-while-revalidate=86400';
 function send(res, status, html, cache) {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', cache || 'private, no-store');
@@ -99,20 +97,6 @@ function toGroups(raw) {
     .map((g) => [g[0].trim().slice(0, 30), g[1]]);
 }
 
-/** 주문 링크 한 줄(필드ID → 값). 없으면 null. */
-async function readLink(id) {
-  const url = new URL(`https://api.airtable.com/v0/${BASE}/${TABLE}`);
-  url.searchParams.set('returnFieldsByFieldId', 'true');
-  url.searchParams.set('maxRecords', '1');
-  url.searchParams.set('filterByFormula', `{링크ID}="${id}"`); // id는 ID_RE로 [A-Za-z0-9_-]만 허용
-  Object.values(F).forEach((f) => url.searchParams.append('fields[]', f));
-  const r = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` }, signal: AbortSignal.timeout(10000), cache: 'no-store' });
-  if (!r.ok) throw new Error(`Airtable ${r.status}`);
-  const rec = ((await r.json()).records || [])[0];
-  const f = rec ? rec.fields || {} : null;
-  return f && f[F.id] === id ? f : null;
-}
-const statusOf = (f) => (f[F.status] && typeof f[F.status] === 'object' ? f[F.status].name : f[F.status]);
 
 // ── 관심 수목 조사: 손님이 주문서 첫 화면에서 고른 수목(POST /o/<링크ID>) ─────────────
 // 한 번 고를 때(바꾸면 또) 한 줄. IP·연락처는 저장하지 않는다 — 방문자는 브라우저가 만든 무작위 번호.
@@ -203,7 +187,7 @@ module.exports = async (req, res) => {
       groups: isPool ? pool.GROUPS : toGroups(f[F.items]),
       items,
     };
-    const { nav, sections } = renderSections(spec);
+    const { nav, sections, guide } = renderSections(spec);
     const bold = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
     const terms = String(f[F.memo] || '').split('\n').map((t) => t.trim()).filter(Boolean).slice(0, 12).map(bold);
     const pageUrl = `${SITE}/o/${id}`;
@@ -211,7 +195,7 @@ module.exports = async (req, res) => {
       word: '주문', unit: unitOf(items), nav, pageUrl, meta: spec.basis,
       ogImage: `${SITE}/assets/${isPool ? 'og-pool.jpg' : 'og-order.jpg'}`, ogDim: true, // 카톡 미리보기: 공동수입은 농장 사진
       secure: sections, terms,
-      cfg: { pid: id, title: spec.title, date: spec.date, min, minLabel: min ? minLabel(min) : '', customer, ...rule, search: items.length > 30, compact: isPool },
+      cfg: { pid: id, title: spec.title, date: spec.date, min, minLabel: min ? minLabel(min) : '', customer, ...rule, search: items.length > 30, compact: isPool, guide },
     });
     if (req.method === 'HEAD') { res.setHeader('Content-Type', 'text/html; charset=utf-8'); return res.status(200).end(); }
     return send(res, 200, html, FRESH);

@@ -89,8 +89,31 @@ test('order page blocks requests under the per-variety and total minimums', () =
   const html = renderPage(spec, { word: '주문', unit: '주', nav, pageUrl: 'https://x/o/a', ogImage: 'https://x/og.jpg', secure: sections, terms: [], notice: [], cfg: { pid: 'a', minEach: 200, minTotal: 600, search: true } });
   assert.match(html, /data-k="h1"/);
   assert.match(html, /class="c-warn" hidden/);
-  const script = html.match(/<script>([\s\S]*?)<\/script>\s*<\/body>/)[1];
-  assert.doesNotThrow(() => new vm.Script(script));
+  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+  assert.equal(scripts.length, 2); // 안내(카드보다 먼저) + 본 스크립트
+  scripts.forEach((s) => assert.doesNotThrow(() => new vm.Script(s)));
+});
+
+test('first-visit guide is drawn before the cards from server data (fixed small photos for the lead hydrangeas)', () => {
+  const items = poolItems(records);
+  const spec = { title: 't', date: '', basis: '', groups: GROUPS, items };
+  const { nav, sections, guide } = renderSections(spec);
+  const lead = items.filter((it) => it.kind !== 'info');
+  assert.equal(guide.cards.length, Math.min(2, lead.length));
+  assert.equal(guide.cards[0].name, lead[0].name);
+  assert.match(guide.cards[0].price, /^₩[\d,]+~?$/);
+  assert.equal(guide.first.spec, lead[0].rows[0][0]);
+  assert.equal(guide.first.price, lead[0].rows[0][2]);
+  // 맨 앞 목수국 둘은 작게 잘라 둔 고정 사진, 그 밖의 품종은 카드 사진 그대로
+  const pin = renderSections({ ...spec, items: [{ ...lead[0], img: '/api/order-photo?id=recJBrKYy2PlKs0wZ&w=520&pv=2&v=attX' }] }).guide;
+  assert.equal(pin.cards[0].img, '/assets/guide/hp-1.webp');
+  const other = renderSections({ ...spec, items: [{ ...lead[0], img: '/api/order-photo?id=recAAAAAAAAAAAAAA&w=520' }] }).guide;
+  assert.equal(other.cards[0].img, '/api/order-photo?id=recAAAAAAAAAAAAAA&w=520');
+  assert.equal(renderSections({ ...spec, items: [] }).guide, null);
+  const html = renderPage(spec, { word: '주문', unit: '주', nav, pageUrl: 'https://x/o/a', ogImage: 'https://x/og.jpg', secure: sections, terms: [], cfg: { pid: 'a', guide } });
+  assert.ok(html.indexOf('id="ob"') < html.indexOf('id="secure"'));
+  assert.ok(html.indexOf('window.OGCFG = {') < html.indexOf('id="secure"'));
+  assert.doesNotMatch(html, /fonts\.googleapis\.com\/css2[^"]*" rel="stylesheet">\n<style>/); // 글꼴이 화면을 막지 않는다
 });
 
 test('genus info card goes before 2+ varieties of the same genus, with stats and editable lines', () => {
