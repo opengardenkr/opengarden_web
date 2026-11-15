@@ -690,13 +690,21 @@ body.obopen{overflow:hidden}
         tabs.addEventListener('click', function(e){
           var bt = e.target.closest('button'); if (!bt) return;
           [].forEach.call(tabs.children, function(x){ x.classList.toggle('on', x === bt); });
-          [].forEach.call(d.querySelectorAll('.d-pane'), function(p, i){ p.hidden = String(i) !== bt.dataset.i; });
+          [].forEach.call(d.querySelectorAll('.d-pane'), function(p, i){
+            p.hidden = String(i) !== bt.dataset.i;
+            if (!p.hidden) [].forEach.call(p.querySelectorAll('img[data-src]'), function(im){ im.src = im.dataset.src; delete im.dataset.src; });
+          });
         });
         d.appendChild(tabs);
       }
       panes.forEach(function(p, i){
         var pane = document.createElement('div'); pane.className = 'd-pane'; pane.hidden = i > 0;
-        p.list.forEach(function(x){ var im = new Image(); im.alt = img.alt + ' ' + p.t; im.decoding = 'async'; if (i) im.loading = 'lazy'; im.src = x.u; pane.appendChild(im); });
+        p.list.forEach(function(x, j){
+          var im = new Image(); im.alt = img.alt + ' ' + p.t; im.decoding = 'async';
+          im.loading = j ? 'lazy' : 'eager';
+          if (i) im.dataset.src = x.u; else im.src = x.u;
+          pane.appendChild(im);
+        });
         var cap = document.createElement('p'); cap.className = 'd-cap';
         cap.textContent = p.s + (p.cr ? (p.s ? ' · ' : '') + '출처 ' + p.cr.replace(/^사진:\s*/, '') : '');
         if (cap.textContent) pane.appendChild(cap);
