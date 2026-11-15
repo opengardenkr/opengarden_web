@@ -48,8 +48,9 @@ function recordList(id) {
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).end();
   const id = typeof req.query.id === 'string' ? req.query.id : '';
-  const att = typeof req.query.a === 'string' && /^att[A-Za-z0-9]{14}$/.test(req.query.a) ? req.query.a : '';
+  const explicit = typeof req.query.a === 'string' && /^att[A-Za-z0-9]{14}$/.test(req.query.a) ? req.query.a : '';
   const ver = typeof req.query.v === 'string' && /^att[A-Za-z0-9]{14}$/.test(req.query.v) ? req.query.v : ''; // 카드 첫 사진의 첨부ID
+  const att = explicit || ver; // 요청한 첨부만 반환해 다른 사진의 영구 캐시를 방지
   if (!/^rec[A-Za-z0-9]{14}$/.test(id)) return res.status(400).end();
   if (!BASE || !TOKEN) return res.status(503).end();
   try {
