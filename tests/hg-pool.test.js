@@ -232,7 +232,9 @@ test('hardiness survives master lookup, requires a safe source and stays in comp
   const html = card(item);
   assert.match(html, /내한성 · USDA Zone 4–8/);
   assert.match(html, /href="https:\/\/example.org\/cultivar"/);
-  assert.match(card({ ...item, hardinessSource: 'javascript:alert(1)' }), /내한성 · 확인 중/);
+  assert.match(html, /<span class="hm">−34℃<\/span>/); // 카드는 최저 온도만(상세는 USDA 글)
+  assert.match(html, /내한성 · USDA Zone 4–8 · 최저 −34℃/);
+  assert.doesNotMatch(card({ ...item, hardinessSource: 'javascript:alert(1)' }), /c-hard/); // 출처가 안전하지 않으면 아무것도 안 그린다
   assert.doesNotMatch(card({ ...item, hardinessSource: 'javascript:alert(1)' }), /javascript:/);
   r.fields[F.review] = ['확인 필요'];
   assert.equal(poolItems([r])[0].hardiness, '');
@@ -250,5 +252,20 @@ test('hardiness survives master lookup, requires a safe source and stays in comp
   const fs = require('fs');
   const template = fs.readFileSync(require('path').join(__dirname, '../tools/order-proposal/template.html'), 'utf8');
   assert.match(template, /'\.c-hard'/);
-  assert.match(template, /\.compact \.card \.hard-detail\{display:none\}/);
+  assert.match(template, /\.card \.c-hard \.hz,\.card \.hard-detail,#dBody \.c-hard \.hm\{display:none\}/);
+});
+
+test('hardiness text becomes the card\'s minimum temperature', () => {
+  const { minTemp } = require('../lib/order-page');
+  assert.equal(minTemp('USDA 4–8 (종 기준)'), '−34℃');
+  assert.equal(minTemp('USDA 2'), '−46℃');
+  assert.equal(minTemp('USDA 5b'), '−26℃');
+  assert.equal(minTemp('USDA 6b–7a'), '−21℃');
+  assert.equal(minTemp('USDA 7b–9 (종 기준)'), '−15℃');
+  assert.equal(minTemp('Zone 5a (SZMIT 기준)'), '−29℃');
+  assert.equal(minTemp('USDA Zone 3–10'), '−40℃');
+  assert.equal(minTemp('RHS H7 (−20°C 미만, 영국 기준)'), '−20℃ 이하');
+  assert.equal(minTemp('RHS H5 (−15~−10°C, 영국 기준)'), '−15℃');
+  assert.equal(minTemp('최저 −18℃'), '−18℃');
+  assert.equal(minTemp('내한성 양호'), '');
 });
