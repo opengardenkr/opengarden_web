@@ -282,3 +282,21 @@ test('photo credits: only CC BY attribution is shown, site and CC0 credits stay 
   assert.equal(ccCredit('사진: Daderot / Wikimedia Commons · CC0'), '');
   assert.equal(ccCredit('사진: florex.ua · https://florex.ua/x'), '');
 });
+
+test('warning from the master shows a red card tag and a detail line, even when plant facts are hidden', () => {
+  const r = structuredClone(records[0]);
+  r.fields[F.alert] = { valuesByLinkedRecordId: { [M1]: ['독성 강함 · 잎·줄기·씨앗을 먹으면 위험합니다'] } };
+  r.fields[F.review] = ['확인 필요'];
+  const [item] = poolItems([r]);
+  assert.equal(item.alert, '독성 강함 · 잎·줄기·씨앗을 먹으면 위험합니다');
+  const html = card({ ...item, k: 'x1' });
+  assert.match(html, /<span class="tag tox">⚠ 독성 강함<\/span>/); // 카드 = ' · ' 앞만
+  assert.match(html, /<p class="c-alert">⚠ 독성 강함 · 잎·줄기·씨앗을 먹으면 위험합니다<\/p>/); // 상세 = 전체
+  assert.ok(html.indexOf('tag tox') < html.indexOf('c-alert'));
+  assert.doesNotMatch(card({ ...poolItems([records[0]])[0], k: 'x2' }), /tag tox|c-alert/); // 비우면 아무것도 안 보인다
+  assert.doesNotMatch(card({ ...item, alert: '<b>x</b>', k: 'x3' }), /<b>/);
+  const fs = require('fs');
+  const template = fs.readFileSync(require('path').join(__dirname, '../tools/order-proposal/template.html'), 'utf8');
+  assert.match(template, /'\.c-latin', '\.c-alert', '\.c-hard'/); // 상세 화면에 옮겨 그린다
+  assert.match(template, /\.card \.c-alert,#dBody \.c-tags \.tag\.tox\{display:none\}/); // 카드는 태그만, 상세는 경고 줄만
+});

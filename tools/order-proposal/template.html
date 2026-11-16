@@ -222,6 +222,9 @@ nav.tabs a.mine-tab.off span{color:var(--gray)}
 .tag.low{color:#D32F2F;border:1px solid #F2B8B5}
 .tag.min{color:var(--green);border:1px solid #BCD2BC}
 .tag.lic{color:#4F5A4C;border:1px solid #CDD5CA}
+.tag.tox{color:#fff;background:#D32F2F;border:1px solid #D32F2F}
+.c-alert{margin:8px 0 4px;padding:8px 10px;border:1px solid #F2B8B5;border-left:4px solid #D32F2F;border-radius:6px;background:#FDECEA;color:#B71C1C;font-size:13px;font-weight:700;line-height:1.5}
+.card .c-alert,#dBody .c-tags .tag.tox{display:none}
 .d-lic{margin:8px 0 2px;font-size:12.5px;line-height:1.5;color:#4F5A4C}
 .c-none{display:flex;align-items:center;justify-content:center;color:#8A9586;font-size:12.5px;font-weight:600}
 .c-body>.c-tags,#dBody .c-tags{position:static;flex-direction:row;flex-wrap:wrap;margin:0 0 6px}
@@ -746,7 +749,7 @@ window.OGCFG = %%CFG%%;
       });
       b.appendChild(d);
     }
-    ['.c-tags', '.c-name', '.c-latin', '.c-hard', '.chips', '.feat', '.c-note'].forEach(function(sel){ var n = c.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
+    ['.c-tags', '.c-name', '.c-latin', '.c-alert', '.c-hard', '.chips', '.feat', '.c-note'].forEach(function(sel){ var n = c.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
     if (c.querySelector('.tag.lic')) { var lic = document.createElement('p'); lic.className = 'd-lic'; lic.textContent = '키워서 판매·식재는 되고, 삽목·분주 등 번식은 안 됩니다.'; b.appendChild(lic); }
     ['.opts', '.c-warn'].forEach(function(sel){ var n = c.querySelector(sel); if (!n) return; var ph = document.createComment(sel); n.parentNode.insertBefore(ph, n); n._ph = ph; b.appendChild(n); });
     dCard = c; $('dOk').textContent = '담기 완료';
