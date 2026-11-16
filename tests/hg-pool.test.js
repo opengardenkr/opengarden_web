@@ -206,7 +206,7 @@ test('cards show a red low-stock tag and a per-variety minimum tag', () => {
   assert.doesNotMatch(cardOf('라임라이트'), /class="tag/);
 });
 
-test('confirmed quotes hold stock: latest confirmed revision per chain, group prefix stripped, sold-out rows drop', () => {
+test('confirmed quotes hold stock: latest confirmed revision per chain, group prefix stripped, sold-out rows stay at 0', () => {
   const { confirmedTotals, applyReserved } = require('../lib/hg-pool');
   const totals = confirmedTotals([
     { number: 'OG-20261113-002', status: '수주확정', items: [{ name: "수국 목수국 '다루마'", spec: 'P9', qty: 1000 }] },
@@ -220,7 +220,7 @@ test('confirmed quotes hold stock: latest confirmed revision per chain, group pr
   const rec = (id, kname, size, st) => ({ id, fields: { [F.kname]: kname, [F.size]: size, [F.stock]: st } });
   const out = applyReserved([rec('r1', "목수국 '다루마'", 'P9', 1183), rec('r2', "병꽃나무 '피코벨라로소'", 'P9', 726),
     rec('r3', "병꽃나무 '앰버'", { name: 'P9' }, 524), rec('r4', "병꽃나무 '스파클'", 'P9', 377)], totals);
-  assert.deepEqual(out.map((r) => [r.id, r.fields[F.stock]]), [['r1', 783], ['r3', 500], ['r4', 377]]);
+  assert.deepEqual(out.map((r) => [r.id, r.fields[F.stock]]), [['r1', 783], ['r2', 0], ['r3', 500], ['r4', 377]]); // 다 빠지면 0 = 품절 카드
 });
 
 test('hardiness survives master lookup, requires a safe source and stays in compact cards and details', () => {
@@ -299,4 +299,29 @@ test('warning from the master shows a red card tag and a detail line, even when 
   const template = fs.readFileSync(require('path').join(__dirname, '../tools/order-proposal/template.html'), 'utf8');
   assert.match(template, /'\.c-latin', '\.c-alert', '\.c-hard'/); // 상세 화면에 옮겨 그린다
   assert.match(template, /\.card \.c-alert,#dBody \.c-tags \.tag\.tox\{display:none\}/); // 카드는 태그만, 상세는 경고 줄만
+});
+
+test('sold out (stock 0) keeps the card blurred with 품절; a sold-out size row alone just drops; empty stock stays open', () => {
+  const r = (id, kname, size, st, extra = {}) => rec(id, { [F.pool]: true, [F.sname]: `Weigela '${kname}'`, [F.kname]: `병꽃나무 '${kname}'`, [F.size]: size, [F.price]: 3900, ...(st === undefined ? {} : { [F.stock]: st }), ...extra });
+  const items = poolItems([r('rec10000000000001', '하나', 'P9', 0), r('rec10000000000002', '둘', 'P9', 0), r('rec10000000000003', '둘', 'P12', 500),
+    r('rec10000000000004', '셋', 'P9', undefined), r('rec10000000000005', '가', 'P9', 120)]).filter((x) => x.kind !== 'info');
+  const by = (n) => items.find((x) => x.name.includes(n));
+  assert.equal(by('하나').soldout, 1);
+  assert.equal(by('둘').soldout, undefined);
+  assert.deepEqual(by('둘').rows.map((x) => x[0]), ['P12']); // 품절 규격만 내림
+  assert.equal(by('셋').soldout, undefined);
+  assert.equal(by('셋').rows[0][1], null); // 빈 칸 = 모름(제한 없음)
+  assert.equal(items[items.length - 1].name, "병꽃나무 '하나'"); // 같은 수종 안에서 품절은 맨 뒤
+  const html = card({ ...by('하나'), k: 'x1' }, {});
+  assert.match(html, /class="card soldout"/);
+  assert.match(html, /<div class="c-sold"><span>품절<\/span><\/div>/);
+  assert.doesNotMatch(html, /class="opt[ "]|type="number"|class="tag/); // 담을 수 없고 태그도 없다
+  assert.doesNotMatch(card({ ...by('가'), k: 'x2' }, {}), /soldout|c-sold/);
+  const { renderSections } = require('../lib/order-page');
+  const { guide } = renderSections({ items, groups: [] });
+  assert.ok(!guide || guide.cards.every((c) => !/하나/.test(c.name))); // 첫 안내 그림에 품절 품종을 쓰지 않는다
+  const fs = require('fs');
+  const template = fs.readFileSync(require('path').join(__dirname, '../tools/order-proposal/template.html'), 'utf8');
+  assert.match(template, /\.card\.soldout>:not\(\.c-sold\)\{filter:blur\(2px\) brightness\(\.72\)/);
+  assert.match(template, /if \(c\.classList\.contains\('soldout'\)\) return;/);
 });
