@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
-const { poolItems, catOf, cleanLatin, GROUPS, FIELDS: F, INFO_FIELDS: INFO } = require('../lib/hg-pool');
+const { poolItems, catOf, cleanLatin, genusKey, GROUPS, FIELDS: F, INFO_FIELDS: INFO } = require('../lib/hg-pool');
 const { qtyRule } = require('../api/order-page');
 const { renderSections, renderPage, card } = require('../lib/order-page');
 
@@ -24,7 +24,7 @@ test('pool merges sizes of one variety into one card and drops unchecked, exclud
   assert.deepEqual(h.rows[0], ['P9', 536, 4500, 0]);
   assert.deepEqual(h.feat, ['흰꽃이 분홍·와인색으로 변함', '컴팩트 수형']);
   assert.deepEqual(h.h, [120, 150]);
-  assert.equal(h.img, `/api/order-photo?id=${M1}&w=520`);
+  assert.equal(h.img, `/api/order-photo?id=${M1}&w=480`);
   assert.equal(h.imgBig, `/api/order-photo?id=${M1}&w=1600`);
   assert.equal(h.genus, 'Hydrangea pan');
   assert.equal(h.unit, '주');
@@ -32,6 +32,24 @@ test('pool merges sizes of one variety into one card and drops unchecked, exclud
   assert.deepEqual(b.feat, []); // 검토상태 '확인 필요'면 특징을 내보내지 않는다
   assert.equal(b.img, '');
   assert.ok(items.every((i) => /^h[0-9a-z]+$/.test(i.k)));
+});
+
+test('oakleaf and climbing hydrangeas join the panicle group, after the panicle varieties', () => {
+  assert.equal(genusKey("Hydrangea querc. 'Alice'"), 'Hydrangea pan');
+  assert.equal(genusKey('Hydrangea anomala petiolaris'), 'Hydrangea pan');
+  assert.equal(genusKey("Hydrangea m. 'Selina'"), 'Hydrangea m');
+  const r = (id, latin, kname, extra) => ({ id, fields: { [F.pool]: true, [F.sname]: latin, [F.kname]: kname, [F.size]: 'P9', [F.price]: 4900, [F.master]: ['recM' + id.slice(4)], ...extra } });
+  const out = poolItems([
+    r('rec000000000000b1', "Hydrangea querc. 'Alice'", "떡갈잎수국 '앨리스'"),
+    r('rec000000000000b2', 'Hydrangea anomala petiolaris', '등수국'),
+    r('rec000000000000b3', "Hydrangea pan. 'Bobo'", "목수국 '보보'"),
+    r('rec000000000000b4', "Hydrangea pan. 'Vanille Fraise'", "목수국 '바닐라 프레이즈'", { [F.stock]: 0 }),
+  ]);
+  const info = out.filter((x) => x.kind === 'info');
+  assert.equal(info.length, 1);
+  assert.equal(info[0].stats.n, 4);
+  assert.deepEqual(out.filter((x) => x.kind !== 'info').map((x) => x.name), ["목수국 '보보'", '등수국', "떡갈잎수국 '앨리스'", "목수국 '바닐라 프레이즈'"]);
+  assert.ok(out.every((x) => !('sr' in x)));
 });
 
 test('groups and latin clean-up', () => {
@@ -144,7 +162,7 @@ test('photo order: hero first, farm display photo second, supplier after; credit
   const rec2 = rec('rec00000000000009', { [F.pool]: true, [F.sname]: "Hydrangea m. 'Tovelit'", [F.kname]: "수국 '토벨리트'", [F.size]: 'P9', [F.price]: 4500, [F.master]: [M1],
     [F.hero]: [hero], [F.credit]: ['사진: A / Wikimedia Commons · CC BY-SA 4.0'], [F.photo]: [sup1, farm] });
   const [it] = poolItems([rec2]);
-  assert.equal(it.img, `/api/order-photo?id=${M1}&w=520&pv=2&v=${hero.id}`);
+  assert.equal(it.img, `/api/order-photo?id=${M1}&w=480&pv=2&v=${hero.id}`);
   assert.deepEqual(it.gal, ['h.' + hero.id, 'f.' + farm.id, 's.' + sup1.id]);
   assert.equal(it.credit, '© A · CC BY-SA 4.0'); // 화면엔 CC 저작자 표시만
   const html = renderSections({ title: 't', groups: GROUPS, items: [it] }).sections;

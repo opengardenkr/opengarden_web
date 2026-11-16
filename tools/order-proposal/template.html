@@ -535,6 +535,7 @@ window.OGCFG = %%CFG%%;
       bt.addEventListener('click', function(e){ e.stopPropagation(); load(); tr.scrollTo({ left: onFarm() ? 0 : tr.clientWidth, behavior: 'smooth' }); });
     });
     if (CFG.compact) setupCompact();
+    preloadAhead();
     if (CFG.search) setupSearch();
     setupOnboard();
     update();
@@ -711,6 +712,20 @@ window.OGCFG = %%CFG%%;
     $('dBg').addEventListener('click', function(){ closeD(); });
     $('dX').addEventListener('click', function(){ closeD(); });
     $('dOk').addEventListener('click', function(){ closeD(); });
+  }
+  // 아래 카드 사진을 미리 받는다(2026-11-16 '아래 묶음 로딩이 느리다'). 카드에 content-visibility:auto가 있어
+  // 브라우저 기본 lazy는 카드가 화면에 거의 닿아야 받기 시작한다 — 화면 아래 두 화면 안에 들어온 카드부터 요청한다.
+  function preloadAhead(){
+    if (!('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var im = e.target.querySelector('.c-photo img:not(.c-alt)');
+        if (im && im.loading === 'lazy') im.loading = 'eager';
+        io.unobserve(e.target);
+      });
+    }, { rootMargin: '0px 0px 200% 0px' });
+    [].forEach.call(document.querySelectorAll('.cards > .card:not(.info)'), function(c){ io.observe(c); });
   }
   var dCard = null;
   function openCard(c){
