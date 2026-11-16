@@ -28,6 +28,16 @@
     },
     "api/order-photo.js": {
       "includeFiles": "public/assets/logo.png"
+    },
+    "api/warm.js": {
+      "regions": ["icn1"],
+      "maxDuration": 300
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/warm",
+      "schedule": "0 0-15,20-23 * * *"
+    }
+  ]
 }
