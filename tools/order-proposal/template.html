@@ -114,6 +114,11 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 .c-mini b{font-size:14.5px;font-weight:800}
 .c-mini .q{font-size:11px;font-weight:700;color:#fff;background:var(--green);border-radius:6px;padding:1px 6px;white-space:nowrap}
 .compact .card.on{box-shadow:0 0 0 2px var(--green) inset}
+/* 품절(모든 규격 재고 0): 카드는 두고 흐리게 + 가운데 '품절' — 누르거나 담을 수 없다 */
+.card.soldout,.compact .card.soldout{position:relative;cursor:default}
+.card.soldout>:not(.c-sold){filter:blur(2px) brightness(.72);pointer-events:none;user-select:none}
+.c-sold{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;background:rgba(15,20,15,.16)}
+.c-sold span{background:rgba(20,26,20,.75);color:#fff;font-size:15px;font-weight:800;letter-spacing:.12em;padding:6px 16px;border-radius:999px}
 .dbg{position:fixed;inset:0;z-index:42;background:rgba(17,24,20,.45);display:none}
 .dsheet{position:fixed;left:0;right:0;bottom:0;z-index:43;background:#fff;border-radius:18px 18px 0 0;max-height:90vh;overflow:auto;transform:translateY(105%);transition:transform .22s ease;padding:14px 0 calc(14px + env(safe-area-inset-bottom))}
 .dopen .dbg{display:block} .dopen .dsheet{transform:none} .dopen{overflow:hidden}
@@ -222,6 +227,9 @@ nav.tabs a.mine-tab.off span{color:var(--gray)}
 .tag.low{color:#D32F2F;border:1px solid #F2B8B5}
 .tag.min{color:var(--green);border:1px solid #BCD2BC}
 .tag.lic{color:#4F5A4C;border:1px solid #CDD5CA}
+.tag.tox{color:#fff;background:#D32F2F;border:1px solid #D32F2F}
+.c-alert{margin:8px 0 4px;padding:8px 10px;border:1px solid #F2B8B5;border-left:4px solid #D32F2F;border-radius:6px;background:#FDECEA;color:#B71C1C;font-size:13px;font-weight:700;line-height:1.5}
+.card .c-alert,#dBody .c-tags .tag.tox{display:none}
 .d-lic{margin:8px 0 2px;font-size:12.5px;line-height:1.5;color:#4F5A4C}
 .c-none{display:flex;align-items:center;justify-content:center;color:#8A9586;font-size:12.5px;font-weight:600}
 .c-body>.c-tags,#dBody .c-tags{position:static;flex-direction:row;flex-wrap:wrap;margin:0 0 6px}
@@ -571,7 +579,7 @@ window.OGCFG = %%CFG%%;
   }
   // 제안서(/p/)는 설정에 안내 그림이 없어 카드에서 만든다(맨 앞 두 장 + 첫 규격 줄)
   function domGuide(){
-    var cs = [].slice.call(document.querySelectorAll('#secure .card:not(.info)')).filter(function(c){ return !c.closest('[hidden]') && !c.hidden; }).slice(0, 2);
+    var cs = [].slice.call(document.querySelectorAll('#secure .card:not(.info):not(.soldout)')).filter(function(c){ return !c.closest('[hidden]') && !c.hidden; }).slice(0, 2);
     var o = cs[0] && cs[0].querySelector('.opt');
     return {
       cards: cs.map(function(c){ var im = c.querySelector('.c-photo img'); return { name: (c.querySelector('.c-name') || {}).textContent || '', price: minPrice(c), img: im ? (im.currentSrc || im.src) : '' }; }),
@@ -689,6 +697,7 @@ window.OGCFG = %%CFG%%;
   function setupCompact(){
     document.body.classList.add('compact');
     [].slice.call(document.querySelectorAll('.card')).forEach(function(c){
+      if (c.classList.contains('soldout')) return; // 품절 카드는 열지 않는다
       if (c.classList.contains('info')) {
         c.addEventListener('click', function(){ openGenus(c); });
         c.addEventListener('keydown', function(e){ if (e.key === 'Enter') openGenus(c); });
@@ -746,7 +755,7 @@ window.OGCFG = %%CFG%%;
       });
       b.appendChild(d);
     }
-    ['.c-tags', '.c-name', '.c-latin', '.c-hard', '.chips', '.feat', '.c-note'].forEach(function(sel){ var n = c.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
+    ['.c-tags', '.c-name', '.c-latin', '.c-alert', '.c-hard', '.chips', '.feat', '.c-note'].forEach(function(sel){ var n = c.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
     if (c.querySelector('.tag.lic')) { var lic = document.createElement('p'); lic.className = 'd-lic'; lic.textContent = '키워서 판매·식재는 되고, 삽목·분주 등 번식은 안 됩니다.'; b.appendChild(lic); }
     ['.opts', '.c-warn'].forEach(function(sel){ var n = c.querySelector(sel); if (!n) return; var ph = document.createComment(sel); n.parentNode.insertBefore(ph, n); n._ph = ph; b.appendChild(n); });
     dCard = c; $('dOk').textContent = '담기 완료';
@@ -758,7 +767,7 @@ window.OGCFG = %%CFG%%;
     ['.c-name', '.c-latin', '.feat', '.i-stat'].forEach(function(sel){ var n = info.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
     var ul = document.createElement('ul'); ul.className = 'cmp';
     // 같은 묶음(탭) 안의 같은 수종만 — PBR 묶음의 목수국과 수국 묶음의 목수국은 따로 비교
-    [].slice.call(document.querySelectorAll('.card:not(.info)')).filter(function(c){ return c.dataset.genus === info.dataset.genus && c.closest('section') === info.closest('section'); }).forEach(function(c){
+    [].slice.call(document.querySelectorAll('.card:not(.info):not(.soldout)')).filter(function(c){ return c.dataset.genus === info.dataset.genus && c.closest('section') === info.closest('section'); }).forEach(function(c){
       var li = document.createElement('li'), f = c.querySelector('.feat li'), h = [].slice.call(c.querySelectorAll('.chip')).map(function(x){ return x.textContent; }).join(' · ');
       [['n', (c.querySelector('.c-name') || {}).textContent || ''], ['p', minPrice(c)], ['s', [h, f ? f.textContent : ''].filter(Boolean).join(' · ')]].forEach(function(x){ var sp = document.createElement('span'); sp.className = x[0]; sp.textContent = x[1]; li.appendChild(sp); });
       li.addEventListener('click', function(){ openCard(c); });
