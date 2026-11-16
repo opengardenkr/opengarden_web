@@ -103,9 +103,8 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 .compact .card.info .feat{font-size:12.5px;margin-top:5px}
 .compact .c-warn{font-size:11px;margin-top:4px}
 .c-hard{font-size:12px;line-height:1.5;margin-top:6px;color:var(--green)}
-/* 카드 = 최저 온도만(눈꽃 + −29℃), 상세 = USDA 존 글 + 출처 (2026-11-16 사용자 요청: 카드 심플화) */
-.c-hard .hm{display:inline-flex;align-items:center;gap:3px;font-weight:700}
-.c-hard .hm::before{content:'';width:11px;height:11px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 2v20M3.3 7l17.4 10M3.3 17l17.4-10'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 2v20M3.3 7l17.4 10M3.3 17l17.4-10'/%3E%3C/svg%3E") center/contain no-repeat}
+/* 카드 = 작은 글 '내한 −29℃'(아이콘 없음), 상세 = 등급 글 + 참고값 설명 + 출처 (2026-11-16 사용자 요청) */
+.c-hard .hm{font-size:11px;font-weight:600}
 .card .c-hard .hz,.card .hard-detail,#dBody .c-hard .hm{display:none}
 .hard-detail{font-size:12px;font-weight:400;margin-top:4px;color:#59635c}
 .hard-detail a{text-decoration:underline}

@@ -149,6 +149,9 @@ test('genus info card goes before 2+ varieties of the same genus, with stats and
   assert.match(html, /class="card info" data-genus="Berberis"/);
   assert.match(html, /2품종 · 키 40~120cm · ₩3,900~₩4,500/);
   assert.match(html, /꽃관목<\/span><small>Shrubs · 1품종/); // 안내 카드는 품종 수에 안 들어감
+  // 키 자료가 일부 품종에만 있으면 수종 키 범위를 쓰지 않는다
+  const partial = poolItems([recs[0], { ...recs[1], fields: { ...recs[1].fields, [F.hmin]: undefined, [F.hmax]: undefined } }], info);
+  assert.equal(partial.find((x) => x.kind === 'info').stats.h, null);
 });
 
 test('photo order: hero first, farm display photo second, supplier after; credit only with hero', () => {
@@ -249,8 +252,10 @@ test('hardiness survives master lookup, requires a safe source and stays in comp
   assert.equal(item.hardiness, 'USDA Zone 4–8');
   const html = card(item);
   assert.match(html, /href="https:\/\/example.org\/cultivar"/);
-  assert.match(html, /<span class="hm">−34℃<\/span>/); // 카드는 최저 온도만(상세는 USDA 글)
-  assert.match(html, /내한성 · 겨울 최저 −34℃ ~ −7℃ · USDA Zone 4–8/); // 상세는 위·아래 둘 다
+  assert.match(html, /<span class="hm">내한 −34℃<\/span>/); // 카드는 작은 글 하나(아이콘 없음)
+  assert.match(html, /내한성 참고 · USDA Zone 4–8 · 겨울 연평균 최저기온 −34℃ ~ −7℃ 지역 기준/); // 상세는 재배지역 구분으로
+  assert.match(html, /개체가 반드시 견디는 온도가 아닙니다/);
+  assert.doesNotMatch(html, /❄|☃|겨울 최저 −/);
   assert.doesNotMatch(html, /자료의 내한성 등급/);
   assert.doesNotMatch(card({ ...item, hardinessSource: 'javascript:alert(1)' }), /c-hard/); // 출처가 안전하지 않으면 아무것도 안 그린다
   assert.doesNotMatch(card({ ...item, hardinessSource: 'javascript:alert(1)' }), /javascript:/);
@@ -261,7 +266,15 @@ test('hardiness survives master lookup, requires a safe source and stays in comp
   assert.equal(verified.hardiness, 'USDA Zone 4–8');
   assert.deepEqual(verified.feat, []);
   assert.equal(verified.h, null);
-  assert.match(card(verified), /내한성 · 겨울 최저 −34℃ ~ −7℃ · USDA Zone 4–8/);
+  assert.match(card(verified), /내한성 참고 · USDA Zone 4–8 · 겨울 연평균 최저기온 −34℃ ~ −7℃ 지역 기준/);
+  // 근연종 자료·평가 체계가 섞인 자료는 카드에 숫자를 쓰지 않고 상세에만 근거를 보인다
+  const rel = card({ ...item, hardiness: 'USDA 5–8 (근연종 기준)' });
+  assert.doesNotMatch(rel, /class="hm"/);
+  assert.match(rel, /이 품종 자료가 아니어서/);
+  const mix = card({ ...item, hardiness: 'USDA 5–9 (NC State) · RHS H5 (영국)' });
+  assert.doesNotMatch(mix, /class="hm"/);
+  assert.match(mix, /평가 체계가 달라/);
+  assert.match(card({ ...item, hardiness: 'RHS H5 (−15~−10°C, 영국 기준)' }), /<span class="hm">내한 −15℃<\/span>/);
   r.fields[F.hardinessSource] = ['https://example.org/changed'];
   assert.equal(poolItems([r])[0].hardiness, '');
   r.fields[F.hardinessSource] = ['https://example.org/cultivar'];
@@ -286,6 +299,9 @@ test('hardiness text becomes the card\'s minimum temperature', () => {
   assert.equal(minTemp('RHS H5 (−15~−10°C, 영국 기준)'), '−15℃');
   assert.equal(minTemp('최저 −18℃'), '−18℃');
   assert.equal(minTemp('내한성 양호'), '');
+  assert.equal(minTemp('USDA 5–8 (근연종 기준)'), '');
+  assert.equal(minTemp('USDA 3–9 (속 기준)'), '');
+  assert.equal(minTemp('USDA 5–9 · RHS H5'), '');
   const { zoneRange } = require('../lib/order-page');
   assert.deepEqual(zoneRange('USDA 4–8 (종 기준)'), { lo: '−34℃', hi: '−7℃' });
   assert.deepEqual(zoneRange('USDA 3–7a'), { lo: '−40℃', hi: '−15℃' });
