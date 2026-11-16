@@ -740,7 +740,7 @@ window.OGCFG = %%CFG%%;
           pane.appendChild(im);
         });
         var cap = document.createElement('p'); cap.className = 'd-cap';
-        cap.textContent = p.s + (p.cr ? (p.s ? ' · ' : '') + '출처 ' + p.cr.replace(/^사진:\s*/, '') : '');
+        cap.textContent = p.s + (p.cr ? (p.s ? ' · ' : '') + p.cr : ''); // p.cr = CC 저작자 표시만(lib/hg-pool.js ccCredit)
         if (cap.textContent) pane.appendChild(cap);
         d.appendChild(pane);
       });

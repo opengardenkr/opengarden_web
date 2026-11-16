@@ -146,10 +146,10 @@ test('photo order: hero first, farm display photo second, supplier after; credit
   const [it] = poolItems([rec2]);
   assert.equal(it.img, `/api/order-photo?id=${M1}&w=520&pv=2&v=${hero.id}`);
   assert.deepEqual(it.gal, ['h.' + hero.id, 'f.' + farm.id, 's.' + sup1.id]);
-  assert.equal(it.credit, '사진: A / Wikimedia Commons · CC BY-SA 4.0');
+  assert.equal(it.credit, '© A · CC BY-SA 4.0'); // 화면엔 CC 저작자 표시만
   const html = renderSections({ title: 't', groups: GROUPS, items: [it] }).sections;
   assert.match(html, /data-g="h\.attHHHHHHHHHHHHH1 f\.attFFFFFFFFFFFFF1 s\.attSSSSSSSSSSSSS1"/);
-  assert.match(html, /data-cr="사진: A/);
+  assert.match(html, /data-cr="© A/);
   assert.match(html, /class="c-ref">참고 사진/);
   const [noHero] = poolItems([rec('rec0000000000000a', { ...rec2.fields, [F.hero]: [] })]);
   assert.equal(noHero.credit, '');
@@ -230,10 +230,10 @@ test('hardiness survives master lookup, requires a safe source and stays in comp
   const [item] = poolItems([r]);
   assert.equal(item.hardiness, 'USDA Zone 4–8');
   const html = card(item);
-  assert.match(html, /내한성 · USDA Zone 4–8/);
   assert.match(html, /href="https:\/\/example.org\/cultivar"/);
   assert.match(html, /<span class="hm">−34℃<\/span>/); // 카드는 최저 온도만(상세는 USDA 글)
-  assert.match(html, /내한성 · USDA Zone 4–8 · 최저 −34℃/);
+  assert.match(html, /내한성 · 겨울 최저 −34℃ ~ −7℃ · USDA Zone 4–8/); // 상세는 위·아래 둘 다
+  assert.doesNotMatch(html, /자료의 내한성 등급/);
   assert.doesNotMatch(card({ ...item, hardinessSource: 'javascript:alert(1)' }), /c-hard/); // 출처가 안전하지 않으면 아무것도 안 그린다
   assert.doesNotMatch(card({ ...item, hardinessSource: 'javascript:alert(1)' }), /javascript:/);
   r.fields[F.review] = ['확인 필요'];
@@ -243,7 +243,7 @@ test('hardiness survives master lookup, requires a safe source and stays in comp
   assert.equal(verified.hardiness, 'USDA Zone 4–8');
   assert.deepEqual(verified.feat, []);
   assert.equal(verified.h, null);
-  assert.match(card(verified), /내한성 · USDA Zone 4–8/);
+  assert.match(card(verified), /내한성 · 겨울 최저 −34℃ ~ −7℃ · USDA Zone 4–8/);
   r.fields[F.hardinessSource] = ['https://example.org/changed'];
   assert.equal(poolItems([r])[0].hardiness, '');
   r.fields[F.hardinessSource] = ['https://example.org/cultivar'];
@@ -268,4 +268,17 @@ test('hardiness text becomes the card\'s minimum temperature', () => {
   assert.equal(minTemp('RHS H5 (−15~−10°C, 영국 기준)'), '−15℃');
   assert.equal(minTemp('최저 −18℃'), '−18℃');
   assert.equal(minTemp('내한성 양호'), '');
+  const { zoneRange } = require('../lib/order-page');
+  assert.deepEqual(zoneRange('USDA 4–8 (종 기준)'), { lo: '−34℃', hi: '−7℃' });
+  assert.deepEqual(zoneRange('USDA 3–7a'), { lo: '−40℃', hi: '−15℃' });
+  assert.deepEqual(zoneRange('USDA 6–11'), { lo: '−23℃', hi: '10℃' });
+  assert.deepEqual(zoneRange('USDA 2'), { lo: '−46℃', hi: '' });
+  assert.equal(zoneRange('RHS H7'), null);
+});
+
+test('photo credits: only CC BY attribution is shown, site and CC0 credits stay in Airtable only', () => {
+  const { ccCredit } = require('../lib/hg-pool');
+  assert.equal(ccCredit('사진: Krzysztof Ziarnek, Kenraiz / Wikimedia Commons · CC BY-SA 4.0'), '© Krzysztof Ziarnek, Kenraiz · CC BY-SA 4.0');
+  assert.equal(ccCredit('사진: Daderot / Wikimedia Commons · CC0'), '');
+  assert.equal(ccCredit('사진: florex.ua · https://florex.ua/x'), '');
 });
