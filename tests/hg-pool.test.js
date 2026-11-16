@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
-const { poolItems, catOf, cleanLatin, GROUPS, FIELDS: F, INFO_FIELDS: INFO } = require('../lib/hg-pool');
+const { poolItems, catOf, cleanLatin, genusKey, GROUPS, FIELDS: F, INFO_FIELDS: INFO } = require('../lib/hg-pool');
 const { qtyRule } = require('../api/order-page');
 const { renderSections, renderPage, card } = require('../lib/order-page');
 
@@ -24,7 +24,7 @@ test('pool merges sizes of one variety into one card and drops unchecked, exclud
   assert.deepEqual(h.rows[0], ['P9', 536, 4500, 0]);
   assert.deepEqual(h.feat, ['흰꽃이 분홍·와인색으로 변함', '컴팩트 수형']);
   assert.deepEqual(h.h, [120, 150]);
-  assert.equal(h.img, `/api/order-photo?id=${M1}&w=520`);
+  assert.equal(h.img, `/api/order-photo?id=${M1}&w=480`);
   assert.equal(h.imgBig, `/api/order-photo?id=${M1}&w=1600`);
   assert.equal(h.genus, 'Hydrangea pan');
   assert.equal(h.unit, '주');
@@ -32,6 +32,24 @@ test('pool merges sizes of one variety into one card and drops unchecked, exclud
   assert.deepEqual(b.feat, []); // 검토상태 '확인 필요'면 특징을 내보내지 않는다
   assert.equal(b.img, '');
   assert.ok(items.every((i) => /^h[0-9a-z]+$/.test(i.k)));
+});
+
+test('oakleaf and climbing hydrangeas join the panicle group, after the panicle varieties', () => {
+  assert.equal(genusKey("Hydrangea querc. 'Alice'"), 'Hydrangea pan');
+  assert.equal(genusKey('Hydrangea anomala petiolaris'), 'Hydrangea pan');
+  assert.equal(genusKey("Hydrangea m. 'Selina'"), 'Hydrangea m');
+  const r = (id, latin, kname, extra) => ({ id, fields: { [F.pool]: true, [F.sname]: latin, [F.kname]: kname, [F.size]: 'P9', [F.price]: 4900, [F.master]: ['recM' + id.slice(4)], ...extra } });
+  const out = poolItems([
+    r('rec000000000000b1', "Hydrangea querc. 'Alice'", "떡갈잎수국 '앨리스'"),
+    r('rec000000000000b2', 'Hydrangea anomala petiolaris', '등수국'),
+    r('rec000000000000b3', "Hydrangea pan. 'Bobo'", "목수국 '보보'"),
+    r('rec000000000000b4', "Hydrangea pan. 'Vanille Fraise'", "목수국 '바닐라 프레이즈'", { [F.stock]: 0 }),
+  ]);
+  const info = out.filter((x) => x.kind === 'info');
+  assert.equal(info.length, 1);
+  assert.equal(info[0].stats.n, 4);
+  assert.deepEqual(out.filter((x) => x.kind !== 'info').map((x) => x.name), ["목수국 '보보'", '등수국', "떡갈잎수국 '앨리스'", "목수국 '바닐라 프레이즈'"]);
+  assert.ok(out.every((x) => !('sr' in x)));
 });
 
 test('groups and latin clean-up', () => {
@@ -131,6 +149,9 @@ test('genus info card goes before 2+ varieties of the same genus, with stats and
   assert.match(html, /class="card info" data-genus="Berberis"/);
   assert.match(html, /2품종 · 키 40~120cm · ₩3,900~₩4,500/);
   assert.match(html, /꽃관목<\/span><small>Shrubs · 1품종/); // 안내 카드는 품종 수에 안 들어감
+  // 키 자료가 일부 품종에만 있으면 수종 키 범위를 쓰지 않는다
+  const partial = poolItems([recs[0], { ...recs[1], fields: { ...recs[1].fields, [F.hmin]: undefined, [F.hmax]: undefined } }], info);
+  assert.equal(partial.find((x) => x.kind === 'info').stats.h, null);
 });
 
 test('photo order: hero first, farm display photo second, supplier after; credit only with hero', () => {
@@ -144,7 +165,7 @@ test('photo order: hero first, farm display photo second, supplier after; credit
   const rec2 = rec('rec00000000000009', { [F.pool]: true, [F.sname]: "Hydrangea m. 'Tovelit'", [F.kname]: "수국 '토벨리트'", [F.size]: 'P9', [F.price]: 4500, [F.master]: [M1],
     [F.hero]: [hero], [F.credit]: ['사진: A / Wikimedia Commons · CC BY-SA 4.0'], [F.photo]: [sup1, farm] });
   const [it] = poolItems([rec2]);
-  assert.equal(it.img, `/api/order-photo?id=${M1}&w=520&pv=2&v=${hero.id}`);
+  assert.equal(it.img, `/api/order-photo?id=${M1}&w=480&pv=2&v=${hero.id}`);
   assert.deepEqual(it.gal, ['h.' + hero.id, 'f.' + farm.id, 's.' + sup1.id]);
   assert.equal(it.credit, '© A · CC BY-SA 4.0'); // 화면엔 CC 저작자 표시만
   const html = renderSections({ title: 't', groups: GROUPS, items: [it] }).sections;
@@ -231,8 +252,10 @@ test('hardiness survives master lookup, requires a safe source and stays in comp
   assert.equal(item.hardiness, 'USDA Zone 4–8');
   const html = card(item);
   assert.match(html, /href="https:\/\/example.org\/cultivar"/);
-  assert.match(html, /<span class="hm">−34℃<\/span>/); // 카드는 최저 온도만(상세는 USDA 글)
-  assert.match(html, /내한성 · 겨울 최저 −34℃ ~ −7℃ · USDA Zone 4–8/); // 상세는 위·아래 둘 다
+  assert.match(html, /<span class="hm">내한 −34℃<\/span>/); // 카드는 작은 글 하나(아이콘 없음)
+  assert.match(html, /내한성 참고 · USDA Zone 4–8 · 겨울 연평균 최저기온 −34℃ ~ −7℃ 지역 기준/); // 상세는 재배지역 구분으로
+  assert.match(html, /개체가 반드시 견디는 온도가 아닙니다/);
+  assert.doesNotMatch(html, /❄|☃|겨울 최저 −/);
   assert.doesNotMatch(html, /자료의 내한성 등급/);
   assert.doesNotMatch(card({ ...item, hardinessSource: 'javascript:alert(1)' }), /c-hard/); // 출처가 안전하지 않으면 아무것도 안 그린다
   assert.doesNotMatch(card({ ...item, hardinessSource: 'javascript:alert(1)' }), /javascript:/);
@@ -243,7 +266,15 @@ test('hardiness survives master lookup, requires a safe source and stays in comp
   assert.equal(verified.hardiness, 'USDA Zone 4–8');
   assert.deepEqual(verified.feat, []);
   assert.equal(verified.h, null);
-  assert.match(card(verified), /내한성 · 겨울 최저 −34℃ ~ −7℃ · USDA Zone 4–8/);
+  assert.match(card(verified), /내한성 참고 · USDA Zone 4–8 · 겨울 연평균 최저기온 −34℃ ~ −7℃ 지역 기준/);
+  // 근연종 자료·평가 체계가 섞인 자료는 카드에 숫자를 쓰지 않고 상세에만 근거를 보인다
+  const rel = card({ ...item, hardiness: 'USDA 5–8 (근연종 기준)' });
+  assert.doesNotMatch(rel, /class="hm"/);
+  assert.match(rel, /이 품종 자료가 아니어서/);
+  const mix = card({ ...item, hardiness: 'USDA 5–9 (NC State) · RHS H5 (영국)' });
+  assert.doesNotMatch(mix, /class="hm"/);
+  assert.match(mix, /평가 체계가 달라/);
+  assert.match(card({ ...item, hardiness: 'RHS H5 (−15~−10°C, 영국 기준)' }), /<span class="hm">내한 −15℃<\/span>/);
   r.fields[F.hardinessSource] = ['https://example.org/changed'];
   assert.equal(poolItems([r])[0].hardiness, '');
   r.fields[F.hardinessSource] = ['https://example.org/cultivar'];
@@ -268,6 +299,9 @@ test('hardiness text becomes the card\'s minimum temperature', () => {
   assert.equal(minTemp('RHS H5 (−15~−10°C, 영국 기준)'), '−15℃');
   assert.equal(minTemp('최저 −18℃'), '−18℃');
   assert.equal(minTemp('내한성 양호'), '');
+  assert.equal(minTemp('USDA 5–8 (근연종 기준)'), '');
+  assert.equal(minTemp('USDA 3–9 (속 기준)'), '');
+  assert.equal(minTemp('USDA 5–9 · RHS H5'), '');
   const { zoneRange } = require('../lib/order-page');
   assert.deepEqual(zoneRange('USDA 4–8 (종 기준)'), { lo: '−34℃', hi: '−7℃' });
   assert.deepEqual(zoneRange('USDA 3–7a'), { lo: '−40℃', hi: '−15℃' });

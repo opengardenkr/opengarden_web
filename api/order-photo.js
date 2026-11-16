@@ -1,4 +1,4 @@
-// GET /api/order-photo?id=<식물 등록 마스터 레코드ID>&w=800|1600[&a=<첨부ID>]
+// GET /api/order-photo?id=<식물 등록 마스터 레코드ID>&w=480|800|1600[&a=<첨부ID>]
 // 공동수입 주문서(lib/hg-pool.js) 카드 사진. 마스터의 '대표사진'·'사진'을 주문서 순서(gallery)로 읽어
 // a가 있으면 그 사진, 없으면 첫 장을 돌려준다. 우리 사진에는 로고 워터마크를 넣고,
 // 외부 저작물(파일명 cc_… — 위키미디어 공용 CC 사진)은 워터마크 없이 크기만 줄인다(저작자 표기는 주문서 상세 화면).
@@ -63,9 +63,10 @@ module.exports = async (req, res) => {
     if (!pick || !pick.url) return res.status(404).end();
     if (!allowedImage(pick.url)) throw new Error('Untrusted attachment');
     const r = await fetch(pick.url, { redirect: 'error', signal: AbortSignal.timeout(10000) });
-    const size = ({ 520: 520, 800: 800 })[req.query.w] || 1600;
+    const size = ({ 480: 480, 520: 520, 800: 800 })[req.query.w] || 1600;
+    const quality = size <= 520 ? 70 : 84; // 카드 사진은 가볍게(폰 두 칸 크기), 상세 1600은 그대로
     const input = await readImage(r);
-    const out = /^cc_/i.test(pick.filename) ? await resize(input, size) : await watermark(input, size);
+    const out = /^cc_/i.test(pick.filename) ? await resize(input, size, quality) : await watermark(input, size, quality);
     res.setHeader('Content-Type', 'image/webp');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Robots-Tag', 'noindex');
