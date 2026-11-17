@@ -214,7 +214,15 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 .mine .t{flex:none;font-weight:800;color:var(--green)}
 .mine .l{flex:1;min-width:0;color:#3f4a3c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mine button{flex:none;height:32px;border:1px solid #C9D1C4;background:#fff;border-radius:8px;padding:0 11px;font-size:12.5px;font-weight:700;color:var(--green)}
-.mine-grp h2 span::before{content:'★ '}
+.mine-grp h2 span::before{content:'♥ ';color:#E0245E}
+/* 카드 ♡ 관심(2026-11-17): 누르면 맨 앞 '♥ 관심' 탭에 모인다 */
+.c-heart{position:absolute;right:6px;top:6px;z-index:2;width:34px;height:34px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.94);box-shadow:0 1px 3px rgba(0,0,0,.2);color:#7D877A;font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.c-heart.on{color:#E0245E}
+.c-heart.pop,nav.tabs a.mine-tab.bump{animation:hpop .32s ease}
+@keyframes hpop{50%{transform:scale(1.22)}}
+.c-top .c-heart,#dBody .c-heart{position:static;flex:none;box-shadow:none;background:var(--soft)}
+#dBody .c-heart{float:right;margin:2px 0 6px 10px}
+#dBody>.c-heart:first-child{margin-right:48px} /* 사진 없는 상세: 위 닫기(×)와 겹치지 않게 */
 nav.tabs a.mine-tab{background:var(--green);border-color:var(--green);color:#fff}
 nav.tabs a.mine-tab span{color:#cfe0d0}
 nav.tabs a.mine-tab.off{background:#fff;color:var(--green);border-color:var(--green)}
@@ -541,7 +549,7 @@ window.OGCFG = %%CFG%%;
   }
 
   // ── 처음 오면: 주문 방법 3단계(위 안내 스크립트 OGB) → 관심 수목 고르기 ─────────────
-  // 고른 수목(품종 묶음)은 맨 위 '★ 관심'에 고른 순서대로 모은다 — 사람마다 보이는 순서가 다르다(이 기기에 기억).
+  // 고른 수목(품종 묶음)은 맨 위 '♥ 관심'에 고른 순서대로 모은다 — 사람마다 보이는 순서가 다르다(이 기기에 기억).
   // 고른 것은 주문 링크(/o/)일 때 [영업] 관심 수목 조사 표에 한 줄 남는다(연락처·IP 없음).
   function store(k, v){
     try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch(e) {}
@@ -549,8 +557,49 @@ window.OGCFG = %%CFG%%;
   }
   // start()가 이 줄보다 먼저 돌 수 있어(주문 링크는 바로 시작) 값은 setupOnboard에서 채운다
   var IK, IKS, moved, picks, sel, canPick, mineOn;
+  // 카드 ♡(관심 품종): hearts = 이 주문서에 있는 것만, 고른 순서. heartsOther = 다른 주문서에서 고른 것(지우지 않고 같이 저장).
+  // ♡를 눌러도 카드는 그 자리에 둔다(둘러보던 화면이 튀지 않게). '♥ 관심' 탭을 누르거나 다시 열면 맨 위에 모인다.
+  var HK, hearts, heartsOther, dirty, sendT; // 값은 setupHearts에서(위와 같은 이유)
+  function setupHearts(){
+    HK = Object.create(null); hearts = []; heartsOther = []; dirty = false; sendT = 0;
+    [].slice.call(document.querySelectorAll('#secure .card:not(.info):not(.soldout)')).forEach(function(c){
+      var k = c.dataset.hk || ('n:' + ((c.querySelector('.c-name') || {}).textContent || c.id).trim());
+      if (HK[k]) return;
+      HK[k] = c; c._hk = k;
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'c-heart';
+      (c.querySelector('.c-photo') || c.querySelector('.c-top') || c).appendChild(b);
+      c._hb = b; paintHeart(c);
+      b.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); toggleHeart(c); });
+    });
+    var saved = []; try { saved = JSON.parse(store('og-heart') || '[]') || []; } catch(e) {}
+    saved = Array.isArray(saved) ? saved.filter(function(k){ return typeof k === 'string'; }) : [];
+    hearts = saved.filter(function(k){ return HK[k]; });
+    heartsOther = saved.filter(function(k){ return !HK[k]; });
+    hearts.forEach(function(k){ paintHeart(HK[k]); });
+    window.addEventListener('pagehide', function(){ if (sendT) sendSurvey(); });
+    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden' && sendT) sendSurvey(); });
+  }
+  function paintHeart(c, b){
+    b = b || c._hb; if (!b) return;
+    var on = hearts.indexOf(c._hk) >= 0;
+    b.textContent = on ? '♥' : '♡'; b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? '관심 빼기' : '관심');
+  }
+  function toggleHeart(c){
+    var i = hearts.indexOf(c._hk), on = i < 0;
+    if (on) hearts.push(c._hk); else hearts.splice(i, 1);
+    store('og-heart', JSON.stringify(heartsOther.concat(hearts).slice(-300)));
+    paintHeart(c); c._hb.classList.remove('pop'); void c._hb.offsetWidth; c._hb.classList.add('pop');
+    // 관심에서 뺀 카드는 바로 제자리로(고른 수목 묶음에 들지 않으면). 넣을 때는 움직이지 않고 탭만 늘린다.
+    var m = moved.indexOf(c);
+    if (!on && m >= 0 && picks.indexOf(c.dataset.ik) < 0) { c._home.parentNode.insertBefore(c, c._home); moved.splice(m, 1); }
+    if (on) dirty = true;
+    ensureMine(); refreshNav(); paintTab(true);
+    clearTimeout(sendT); sendT = setTimeout(sendSurvey, 3000);
+  }
   function setupOnboard(){
     IK = Object.create(null); IKS = []; moved = []; picks = []; sel = []; canPick = false; mineOn = true;
+    setupHearts();
     [].slice.call(document.querySelectorAll('#secure .card:not(.info)')).forEach(function(c){
       var k = c.dataset.ik; if (!k) return;
       if (!IK[k]) { IK[k] = { k:k, l:c.dataset.il || k, n:0 }; IKS.push(IK[k]); }
@@ -568,8 +617,8 @@ window.OGCFG = %%CFG%%;
       var t = $('g-mine'); if (t && !t.hidden) t.scrollIntoView({ behavior:'smooth', block:'start' });
     });
     var saved = []; try { saved = JSON.parse(store('og-int') || '[]') || []; } catch(e) {}
-    picks = (Array.isArray(saved) ? saved : []).filter(function(k){ return IK[k]; });
-    if (canPick && picks.length) applyInterest(picks, false);
+    picks = canPick ? (Array.isArray(saved) ? saved : []).filter(function(k){ return IK[k]; }) : [];
+    if (picks.length || hearts.length) applyInterest(picks, false);
     $('mine').hidden = !canPick; mineText();
     var wantPick = function(){ return canPick && !picks.length && store('og-int-skip') !== '1'; };
     OGB.hook({ want: wantPick, pick: openPick });
@@ -611,43 +660,59 @@ window.OGCFG = %%CFG%%;
     moved.forEach(function(c){ if (c._home) c._home.parentNode.insertBefore(c, c._home); c.classList.remove('dup'); });
     moved = [];
     picks = keys.filter(function(k){ return IK[k]; });
-    if (!picks.length) mineOn = true;
-    var sec = $('g-mine');
-    if (picks.length && !sec) {
-      sec = document.createElement('section'); sec.className = 'grp mine-grp'; sec.id = 'g-mine';
-      sec.innerHTML = '<h2><span>내 관심 수목</span><small></small></h2><div class="cards"></div>';
-      $('secure').insertBefore(sec, $('secure').firstChild);
-      var a = document.createElement('a'); a.href = '#'; a.dataset.to = 'g-mine'; a.className = 'mine-tab'; a.id = 'mineTab'; a.innerHTML = '<b>★</b> 관심 <span></span>';
-      // 관심 탭은 켜고 끄는 단추: 켜면 고른 수목을 맨 위에 모으고, 다시 누르면 원래 순서(수국부터)로 돌린다
-      a.addEventListener('click', function(e){
-        e.preventDefault();
-        mineOn = !mineOn; applyInterest(picks, false);
-        var to = mineOn ? sec : document.querySelector('#secure section.grp:not([hidden])');
-        if (to) to.scrollIntoView({ behavior:'smooth', block:'start' });
-      });
-      var nav = document.querySelector('nav.tabs .wrap'); if (nav) nav.insertBefore(a, nav.firstChild);
-    }
+    if (!picks.length && !hearts.length) mineOn = true;
+    var sec = ensureMine();
     if (sec && mineOn) {
       var box = sec.querySelector('.cards'), all = [].slice.call(document.querySelectorAll('#secure .card'));
+      var put = function(c){
+        if (moved.indexOf(c) >= 0) return;
+        if (!c._home) { c._home = document.createComment('home'); c.parentNode.insertBefore(c._home, c); }
+        box.appendChild(c); moved.push(c);
+      };
+      // ♡ 고른 품종 먼저(고른 순서) → 고른 수목 묶음(수종 안내 카드 포함)
+      hearts.forEach(function(k){ if (HK[k]) put(HK[k]); });
       picks.forEach(function(k){
         var info = false;
         all.forEach(function(c){
           if (c.dataset.ik !== k) return;
-          if (!c._home) { c._home = document.createComment('home'); c.parentNode.insertBefore(c._home, c); }
           if (c.classList.contains('info')) { if (info) c.classList.add('dup'); info = true; }
-          box.appendChild(c); moved.push(c);
+          put(c);
         });
       });
+      dirty = false;
     }
-    refreshNav(); mineText();
-    var tab = $('mineTab');
-    if (tab) {
-      tab.hidden = !picks.length; tab.classList.toggle('off', !mineOn);
-      tab.firstChild.textContent = mineOn ? '★' : '☆';
-      tab.setAttribute('aria-pressed', mineOn ? 'true' : 'false');
-      tab.querySelector('span').textContent = picks.reduce(function(n, k){ return n + IK[k].n; }, 0);
-    }
+    refreshNav(); mineText(); paintTab(false);
     if (record) sendSurvey();
+  }
+  // 맨 앞 '♥ 관심' 탭과 맨 위 묶음 — ♡나 고른 수목이 처음 생길 때 만든다
+  function ensureMine(){
+    var sec = $('g-mine');
+    if (sec || !(picks.length || hearts.length)) return sec;
+    sec = document.createElement('section'); sec.className = 'grp mine-grp'; sec.id = 'g-mine';
+    sec.innerHTML = '<h2><span>내 관심</span><small></small></h2><div class="cards"></div>';
+    $('secure').insertBefore(sec, $('secure').firstChild);
+    var a = document.createElement('a'); a.href = '#'; a.dataset.to = 'g-mine'; a.className = 'mine-tab'; a.id = 'mineTab'; a.innerHTML = '<b>♥</b> 관심 <span></span>';
+    // 켜고 끄는 단추: 켜면 관심을 맨 위에 모으고, 다시 누르면 원래 순서(수국부터)로. 켜진 채 새로 ♡한 게 있으면 끄지 않고 다시 모은다.
+    a.addEventListener('click', function(e){
+      e.preventDefault();
+      mineOn = !(mineOn && !dirty); applyInterest(picks, false);
+      var to = mineOn ? sec : document.querySelector('#secure section.grp:not([hidden])');
+      if (to) to.scrollIntoView({ behavior:'smooth', block:'start' });
+    });
+    var nav = document.querySelector('nav.tabs .wrap'); if (nav) nav.insertBefore(a, nav.firstChild);
+    return sec;
+  }
+  // 탭 숫자 = ♡ 품종 + 고른 수목의 품종(겹치면 한 번)
+  function paintTab(bump){
+    var tab = $('mineTab'); if (!tab) return;
+    var set = [];
+    hearts.forEach(function(k){ if (HK[k]) set.push(HK[k]); });
+    if (picks.length) [].forEach.call(document.querySelectorAll('#secure .card:not(.info)'), function(c){ if (picks.indexOf(c.dataset.ik) >= 0 && set.indexOf(c) < 0) set.push(c); });
+    tab.hidden = !set.length; tab.classList.toggle('off', !mineOn);
+    tab.firstChild.textContent = mineOn ? '♥' : '♡';
+    tab.setAttribute('aria-pressed', mineOn ? 'true' : 'false');
+    tab.querySelector('span').textContent = set.length;
+    if (bump) { tab.classList.remove('bump'); void tab.offsetWidth; tab.classList.add('bump'); }
   }
   // 탭 숫자·묶음 제목 숫자를 지금 모양에 맞춘다. 비면 탭과 묶음을 숨긴다.
   function refreshNav(){
@@ -661,9 +726,14 @@ window.OGCFG = %%CFG%%;
     });
   }
   function sendSurvey(){
-    if (CFG.enc || !CFG.pid || !picks.length || !window.fetch) return;
-    var labels = picks.map(function(k){ return IK[k].l; }), sig = labels.slice().sort().join('|');
-    if (store('og-int-sent:' + CFG.pid) === sig) return;
+    clearTimeout(sendT); sendT = 0;
+    if (CFG.enc || !CFG.pid || !window.fetch) return;
+    var labels = picks.map(function(k){ return IK[k].l; });
+    var hs = hearts.filter(function(k){ return HK[k]; }).map(function(k){ return { k: k, n: ((HK[k].querySelector('.c-name') || {}).textContent || '').trim().slice(0, 80) }; });
+    var sent = store('og-int-sent:' + CFG.pid);
+    if (!labels.length && !hs.length && !sent) return; // 아무것도 고른 적 없으면 보내지 않는다
+    var sig = labels.slice().sort().join('|') + '#' + hs.map(function(h){ return h.k; }).join('|');
+    if (sent === sig) return;
     var vid = store('og-vid');
     if (!vid || !/^[a-z0-9]{8,24}$/.test(vid)) {
       vid = ''; var a = new Uint8Array(12);
@@ -671,7 +741,7 @@ window.OGCFG = %%CFG%%;
       for (var j = 0; j < 12; j++) vid += (a[j] % 36).toString(36);
       store('og-vid', vid);
     }
-    fetch('/api/order-page?id=' + encodeURIComponent(CFG.pid), { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ picks: labels, visitor: vid }), keepalive: true })
+    fetch('/api/order-page?id=' + encodeURIComponent(CFG.pid), { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ picks: labels, hearts: hs, visitor: vid }), keepalive: true })
       .then(function(r){ if (r.ok) store('og-int-sent:' + CFG.pid, sig); }).catch(function(){});
   }
 
@@ -706,7 +776,7 @@ window.OGCFG = %%CFG%%;
       var m = document.createElement('div'); m.className = 'c-mini';
       m.innerHTML = '<b></b><span class="q" hidden></span>'; m.firstChild.textContent = minPrice(c);
       c.querySelector('.c-body').insertBefore(m, c.querySelector('.opts'));
-      c.addEventListener('click', function(e){ if (!e.target.closest('.opts, .c-flip')) openCard(c); });
+      c.addEventListener('click', function(e){ if (!e.target.closest('.opts, .c-flip, .c-heart')) openCard(c); });
     });
     $('dBg').addEventListener('click', function(){ closeD(); });
     $('dX').addEventListener('click', function(){ closeD(); });
@@ -770,6 +840,11 @@ window.OGCFG = %%CFG%%;
       b.appendChild(d);
     }
     ['.c-tags', '.c-name', '.c-latin', '.c-alert', '.c-hard', '.chips', '.feat', '.c-note'].forEach(function(sel){ var n = c.querySelector(sel); if (n) b.appendChild(n.cloneNode(true)); });
+    if (c._hb) { // 상세에서도 ♡ — 카드의 ♡와 같은 것
+      var hb = document.createElement('button'); hb.type = 'button'; hb.className = 'c-heart'; paintHeart(c, hb);
+      hb.addEventListener('click', function(){ toggleHeart(c); paintHeart(c, hb); });
+      b.insertBefore(hb, b.querySelector('.c-name'));
+    }
     if (c.querySelector('.tag.lic')) { var lic = document.createElement('p'); lic.className = 'd-lic'; lic.textContent = '키워서 판매·식재는 되고, 삽목·분주 등 번식은 안 됩니다.'; b.appendChild(lic); }
     ['.opts', '.c-warn'].forEach(function(sel){ var n = c.querySelector(sel); if (!n) return; var ph = document.createComment(sel); n.parentNode.insertBefore(ph, n); n._ph = ph; b.appendChild(n); });
     dCard = c; $('dOk').textContent = '담기 완료';
