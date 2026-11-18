@@ -192,6 +192,30 @@ nav.tabs a span{color:var(--gray);font-weight:500;font-size:12px}
 .btn-ghost{background:#fff;border:1px solid #C9D1C4;color:var(--ink)}
 .btn-send{background:var(--green);border:0;color:#fff}
 .btn-send:disabled{background:#B9C2B5}
+/* 장바구니: 담은 품목을 이 창에서 바로 고친다(2026-11-19 사용자 요청 — 카드를 다시 찾지 않게) */
+.bar-top.tap{cursor:pointer}
+.cart-h{display:flex;align-items:center;justify-content:space-between}
+.cart-x{width:40px;height:40px;border:0;background:none;font-size:30px;line-height:1;color:var(--gray);margin-right:-8px}
+.cart{list-style:none;margin-top:2px}
+.cart li{display:flex;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
+.cart li.zero .m,.cart li.zero .th{opacity:.4}
+.cart .th{width:56px;height:56px;border-radius:9px;object-fit:cover;flex:none;background:var(--soft)}
+.cart .m{flex:1;min-width:0}
+.cart .n{font-size:15.5px;font-weight:700;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cart .s{font-size:13.5px;color:var(--gray);margin-top:2px}
+.cart .w{font-size:12.5px;color:var(--warn);font-weight:700;margin-top:3px}
+.cart .ctl{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.cart .stp{display:flex;align-items:center;border:1px solid #C9D1C4;border-radius:10px;overflow:hidden}
+.cart .stp button{width:38px;height:40px;border:0;background:var(--soft);font-size:21px;color:var(--green)}
+.cart .stp input{width:58px;height:40px;border:0;border-radius:0;text-align:center;font-size:16px;font-weight:700;color:var(--ink);background:#fff;-moz-appearance:textfield}
+.cart .stp input::-webkit-inner-spin-button,.cart .stp input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.cart .del{border:0;background:none;font-size:13px;color:var(--gray);text-decoration:underline;padding:4px 2px}
+.cart-sum{position:sticky;bottom:calc(-18px - env(safe-area-inset-bottom));background:#fff;padding:12px 0 calc(18px + env(safe-area-inset-bottom));margin-bottom:calc(-18px - env(safe-area-inset-bottom))}
+.cart-sum .prog-txt{margin-top:6px}
+.cart-tot{display:flex;justify-content:space-between;align-items:baseline;margin:8px 0 10px}
+.cart-tot span{font-size:14px;color:var(--gray)}
+.cart-tot b{font-size:22px;font-weight:800}
+.cart-sum .btn-go{width:100%}
 .done{text-align:center;padding:10px 0}
 .done .no{display:inline-block;margin-top:10px;font-size:20px;font-weight:800;color:var(--green);background:var(--soft);border-radius:10px;padding:6px 14px;letter-spacing:.04em}
 .done p{font-size:14px;color:#3f4a3c;margin-top:10px}
@@ -438,6 +462,14 @@ window.OGCFG = %%CFG%%;
 <div id="sheetWrap">
   <div class="sheet-bg" id="sheetBg"></div>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetH"><div class="wrap" id="sheetIn">
+    <div id="cartV">
+      <div class="cart-h"><h2>담은 품목 <span id="cartN"></span></h2><button type="button" class="cart-x" id="cartX" aria-label="닫기">×</button></div>
+      <ul class="cart" id="cart"></ul>
+      <div class="cart-sum"><div class="prog" id="cProg" aria-hidden="true"><i id="cProgI"></i></div><p class="prog-txt" id="cProgT"></p>
+        <div class="cart-tot"><span>합계</span><b id="cTot">₩0</b></div>
+        <button type="button" class="btn-go" id="cGo">이대로 %%WORD%% 요청</button></div>
+    </div>
+    <div id="formV" hidden>
     <h2 id="sheetH">%%WORD%% 요청 확인</h2>
     <ul class="sum" id="sum"></ul>
     <p class="below" id="below" hidden></p>
@@ -450,6 +482,7 @@ window.OGCFG = %%CFG%%;
       <p class="err" id="err" role="alert"></p>
       <div class="row2"><button type="button" class="btn-ghost" id="back">수량 수정</button><button type="submit" class="btn-send" id="send">요청 보내기</button></div>
     </form>
+    </div>
   </div></div>
 </div>
 
@@ -460,6 +493,7 @@ window.OGCFG = %%CFG%%;
   var $ = function(id){ return document.getElementById(id); };
   var fmt = function(n){ return n.toLocaleString('ko-KR'); };
   var opts = [];
+  var canGo = false, cartIds = []; // 장바구니(아래 openCart) — update()가 먼저 불릴 수 있어 위에 둔다
   var CUSTOMER = null;
 
   // 품목 탭: 주소의 #k(열쇠)를 지우지 않도록 해시 대신 스크롤로 이동
@@ -945,14 +979,79 @@ window.OGCFG = %%CFG%%;
       if (total >= CFG.min) { t.textContent = '최소 ' + CFG.minLabel + ' 충족'; t.className = 'prog-txt ok'; }
       else { t.textContent = '최소 주문 ' + CFG.minLabel + '까지 ₩' + fmt(CFG.min - total) + ' 남음'; t.className = 'prog-txt'; }
     }
-    $('go').disabled = list.length === 0 || ((rule || CFG.minTotal) && (short > 0 || (CFG.minTotal && qty < CFG.minTotal)));
+    canGo = list.length > 0 && !((rule || CFG.minTotal) && (short > 0 || (CFG.minTotal && qty < CFG.minTotal)));
+    $('go').disabled = list.length === 0; // 규칙이 안 맞아도 장바구니는 열린다 — 거기서 고친다
+    $('bar').querySelector('.bar-top').classList.toggle('tap', list.length > 0);
+    if (document.body.classList.contains('open')) paintCart(list, total);
     var s = {}; list.forEach(function(i){ s[i.id] = i.qty; });
     try { localStorage.setItem(KEY, JSON.stringify(s)); } catch(e) {}
     return { list:list, total:total };
   }
 
+  // 장바구니(담은 품목) → [이대로 요청] → 연락처. 줄은 창을 닫을 때까지 남는다(0으로 내려도 + 로 되살린다).
+  function optById(id){ for (var i = 0; i < opts.length; i++) if (opts[i].dataset.id === id) return opts[i]; return null; }
+  function openCart(){
+    var st = update();
+    if (!st.list.length) return;
+    cartIds = st.list.map(function(i){ return i.id; });
+    $('sheetIn').parentNode.scrollTop = 0;
+    var ul = $('cart'); ul.innerHTML = '';
+    cartIds.forEach(function(id){
+      var o = optById(id); if (!o) return;
+      var k = id.split('|')[0], c = document.getElementById('i-' + k);
+      var li = document.createElement('li'); li.dataset.id = id;
+      var im = c && c.querySelector('.c-photo img:not(.c-alt)'), th;
+      if (im && (im.currentSrc || im.getAttribute('src') || im.dataset.src)) { th = document.createElement('img'); th.src = im.currentSrc || im.getAttribute('src') || im.dataset.src; th.alt = ''; }
+      else th = document.createElement('span');
+      th.className = 'th'; li.appendChild(th);
+      var m = document.createElement('div'); m.className = 'm';
+      var n = document.createElement('div'); n.className = 'n'; n.textContent = (c && (c.querySelector('.c-name') || {}).textContent || o.dataset.name || '').trim();
+      var sp = document.createElement('div'); sp.className = 's'; sp.textContent = o.dataset.spec + ' · ₩' + fmt(+o.dataset.price || 0);
+      var w = document.createElement('div'); w.className = 'w'; w.hidden = true;
+      m.appendChild(n); m.appendChild(sp); m.appendChild(w); li.appendChild(m);
+      var ctl = document.createElement('div'); ctl.className = 'ctl';
+      var stp = document.createElement('div'); stp.className = 'stp';
+      var mi = document.createElement('button'); mi.type = 'button'; mi.textContent = '−'; mi.setAttribute('aria-label', n.textContent + ' ' + o.dataset.spec + ' 줄이기');
+      var inp = document.createElement('input'); inp.type = 'number'; inp.inputMode = 'numeric'; inp.min = '0'; inp.setAttribute('aria-label', n.textContent + ' ' + o.dataset.spec + ' 수량');
+      var pl = document.createElement('button'); pl.type = 'button'; pl.textContent = '+'; pl.setAttribute('aria-label', n.textContent + ' ' + o.dataset.spec + ' 늘리기');
+      stp.appendChild(mi); stp.appendChild(inp); stp.appendChild(pl);
+      var del = document.createElement('button'); del.type = 'button'; del.className = 'del'; del.textContent = '빼기';
+      ctl.appendChild(stp); ctl.appendChild(del); li.appendChild(ctl);
+      mi.addEventListener('click', function(){ o.querySelector('.minus').click(); });
+      pl.addEventListener('click', function(){ o.querySelector('.plus').click(); });
+      del.addEventListener('click', function(){ setQty(o, 0); update(); });
+      inp.addEventListener('focus', function(){ inp.select(); });
+      inp.addEventListener('change', function(){ setQty(o, Math.max(0, parseInt(inp.value, 10) || 0)); update(); });
+      inp.addEventListener('blur', function(){ inp.value = qtyOf(o); }); // 단위로 맞춘 값을 보인다(입력 중엔 덮지 않았다)
+      ul.appendChild(li);
+    });
+    $('cartV').hidden = false; $('formV').hidden = true;
+    document.body.classList.add('open');
+    paintCart(st.list, st.total);
+  }
+  function paintCart(list, total){
+    var have = {}; list.forEach(function(i){ have[i.id] = i; });
+    [].slice.call($('cart').children).forEach(function(li){
+      var o = optById(li.dataset.id); if (!o) return;
+      var q = qtyOf(o), inp = li.querySelector('input'), w = li.querySelector('.w');
+      if (document.activeElement !== inp) inp.value = q;
+      li.classList.toggle('zero', !q);
+      li.querySelector('.del').hidden = !q;
+      // 품종 최소 미달(카드의 빨간 줄과 같은 말) · 단위 맞춤/재고 전량 안내
+      var c = document.getElementById('i-' + li.dataset.id.split('|')[0]), cw = c && c.querySelector('.c-warn'), ow = o.querySelector('.o-warn');
+      var msg = q && c && c.classList.contains('short') && cw ? cw.textContent.replace(/\s*\(지금[^)]*\)\s*$/, '').replace(/ 주문할 수 있습니다$/, '') : (q && ow && !ow.hidden ? ow.textContent : '');
+      w.textContent = msg; w.hidden = !msg;
+    });
+    $('cartN').textContent = list.length;
+    $('cTot').textContent = '₩' + fmt(total);
+    $('cProg').hidden = $('prog').hidden; $('cProgI').style.width = $('progI').style.width;
+    $('cProgT').textContent = $('progT').textContent; $('cProgT').className = $('progT').className; $('cProgT').hidden = $('progT').hidden;
+    $('cGo').disabled = !canGo;
+  }
   function openSheet(){
     var st = update();
+    if (!canGo) return;
+    $('cartV').hidden = true; $('formV').hidden = false;
     var sum = $('sum'); sum.innerHTML = '';
     st.list.forEach(function(i){
       var li = document.createElement('li');
@@ -968,10 +1067,14 @@ window.OGCFG = %%CFG%%;
     else below.hidden = true;
     $('err').textContent = '';
     document.body.classList.add('open');
+    $('sheetIn').parentNode.scrollTop = 0;
   }
   function closeSheet(){ document.body.classList.remove('open'); }
-  $('go').addEventListener('click', openSheet);
-  $('back').addEventListener('click', closeSheet);
+  $('go').addEventListener('click', openCart);
+  $('bar').querySelector('.bar-top').addEventListener('click', function(){ if (!$('go').disabled) openCart(); });
+  $('cGo').addEventListener('click', openSheet);
+  $('cartX').addEventListener('click', closeSheet);
+  $('back').addEventListener('click', openCart);
   $('sheetBg').addEventListener('click', closeSheet);
 
   function summaryText(no, st){
