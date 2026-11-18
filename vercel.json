@@ -7,6 +7,10 @@
       "destination": "/api/order-page?id=:id"
     },
     {
+      "source": "/o/:id/print",
+      "destination": "/api/order-page?id=:id&print=1"
+    },
+    {
       "source": "/q/:key",
       "destination": "/api/quote-view?key=:key"
     },

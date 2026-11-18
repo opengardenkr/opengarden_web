@@ -7,6 +7,7 @@
 const { renderSections, renderPage, esc, unitOf } = require('../lib/order-page');
 const { GROUPS } = require('../lib/catalog-data');
 const pool = require('../lib/hg-pool');
+const { renderPrint } = require('../lib/print-page');
 
 const { F, ID_RE, readLink, statusOf } = require('../lib/order-link');
 
@@ -203,6 +204,13 @@ module.exports = async (req, res) => {
       groups: isPool ? pool.GROUPS : toGroups(f[F.items]),
       items,
     };
+    // 종이 주문서(GET /o/<ID>/print): 공동수입은 '종이 추천' 묶음, 손으로 만든 주문서는 품목 전부(108개까지)
+    if (req.query.print === '1') {
+      const out = renderPrint(spec, { unit: unitOf(items) || '주', ...rule }, { all: !isPool });
+      if (out.over) console.warn(`order-page print: ${out.over} items over the 10-page limit (${id})`);
+      if (req.method === 'HEAD') { res.setHeader('Content-Type', 'text/html; charset=utf-8'); return res.status(200).end(); }
+      return send(res, 200, out.html, FRESH);
+    }
     const { nav, sections, guide } = renderSections(spec);
     const bold = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
     const terms = String(f[F.memo] || '').split('\n').map((t) => t.trim()).filter(Boolean).slice(0, 12).map(bold);
@@ -211,7 +219,7 @@ module.exports = async (req, res) => {
       word: '주문', unit: unitOf(items), nav, pageUrl, meta: spec.basis,
       ogImage: `${SITE}/assets/${isPool ? 'og-pool.jpg' : 'og-order.jpg'}`, ogDim: true, // 카톡 미리보기: 공동수입은 농장 사진
       secure: sections, terms,
-      cfg: { pid: id, title: spec.title, date: spec.date, min, minLabel: min ? minLabel(min) : '', customer, ...rule, search: items.length > 30, compact: isPool, guide },
+      cfg: { pid: id, title: spec.title, date: spec.date, min, minLabel: min ? minLabel(min) : '', customer, ...rule, search: items.length > 30, compact: isPool, guide, print: `/o/${id}/print` },
     });
     if (req.method === 'HEAD') { res.setHeader('Content-Type', 'text/html; charset=utf-8'); return res.status(200).end(); }
     return send(res, 200, html, FRESH);
