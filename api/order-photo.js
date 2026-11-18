@@ -1,4 +1,5 @@
-// GET /api/order-photo?id=<식물 등록 마스터 레코드ID>&w=480|800|1600[&a=<첨부ID>]
+// GET /api/order-photo?id=<식물 등록 마스터 레코드ID>&w=480|800|1600[&a=<첨부ID>][&f=jpg]
+// f=jpg: 종이 주문서(lib/print-page.js) — 인쇄·PDF 저장 때 JPEG는 그대로 들어가 PDF가 가볍다(WebP는 풀어서 넣어 10배 넘게 커진다).
 // 공동수입 주문서(lib/hg-pool.js) 카드 사진. 마스터의 '대표사진'·'사진'을 주문서 순서(gallery)로 읽어
 // a가 있으면 그 사진, 없으면 첫 장을 돌려준다. 우리 사진에는 로고 워터마크를 넣고,
 // 외부 저작물(파일명 cc_… — 위키미디어 공용 CC 사진)은 워터마크 없이 크기만 줄인다(저작자 표기는 주문서 상세 화면).
@@ -66,8 +67,9 @@ module.exports = async (req, res) => {
     const size = ({ 480: 480, 520: 520, 800: 800 })[req.query.w] || 1600;
     const quality = size <= 520 ? 70 : 84; // 카드 사진은 가볍게(폰 두 칸 크기), 상세 1600은 그대로
     const input = await readImage(r);
-    const out = /^cc_/i.test(pick.filename) ? await resize(input, size, quality) : await watermark(input, size, quality);
-    res.setHeader('Content-Type', 'image/webp');
+    const fmt = req.query.f === 'jpg' ? 'jpeg' : 'webp';
+    const out = /^cc_/i.test(pick.filename) ? await resize(input, size, quality, fmt) : await watermark(input, size, quality, fmt);
+    res.setHeader('Content-Type', `image/${fmt}`);
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Robots-Tag', 'noindex');
     res.setHeader('Cache-Control', req.query.v ? 'public, max-age=86400, s-maxage=604800, immutable' : 'public, s-maxage=3600, stale-while-revalidate=86400');

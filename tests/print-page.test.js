@@ -29,7 +29,7 @@ test('print: card shows name without quotes, price, stock and a box per size; ph
   assert.match(html, /P9<\/span> 3,900원<\/b><small>재고 1,183주<\/small>/);
   assert.match(html, /P12 \(컬러팟\)<\/span> 7,500원<\/b><\/div>/); // 재고 모름이면 재고 글 없음
   assert.equal((html.match(/class="box"/g) || []).length, 2);
-  assert.match(html, /order-photo\?id=rec00000000000001&amp;w=800/);
+  assert.match(html, /order-photo\?id=rec00000000000001&amp;w=800&amp;pv=2&amp;v=attAAAAAAAAAAAAAA&amp;f=jpg/);
   assert.match(html, /증식 금지/);
   assert.match(html, /noindex/);
 });
@@ -46,7 +46,7 @@ test('print: cover farm photos (종이 표지, 3개까지) use the farm attachme
   items.push(item(5, { cover: 1, gal: ['h.attAAAAAAAAAAAAAA'] })); // 농장 실사 없음 → 빼기
   assert.equal(pickCover(items).length, 3);
   const html = renderPrint({ title: 'T', basis: 'B', items }).html;
-  assert.match(html, /w=800&amp;a=attFFFFFFFFFFFFFF&amp;v=attFFFFFFFFFFFFFF/);
+  assert.match(html, /w=800&amp;f=jpg&amp;a=attFFFFFFFFFFFFFF&amp;v=attFFFFFFFFFFFFFF/);
   assert.match(html, /실제로 나가는 묘목/);
 });
 
