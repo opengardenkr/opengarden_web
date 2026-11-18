@@ -204,10 +204,9 @@ module.exports = async (req, res) => {
       groups: isPool ? pool.GROUPS : toGroups(f[F.items]),
       items,
     };
-    // 종이 주문서(GET /o/<ID>/print): 공동수입은 '종이 추천' 묶음, 손으로 만든 주문서는 품목 전부(108개까지)
+    // 종이 주문서(GET /o/<ID>/print): 재고 있는 품종 전부('종이 제외' 빼고). 인쇄 화면에서 전체 / ♥ 관심을 고른다
     if (req.query.print === '1') {
-      const out = renderPrint(spec, { unit: unitOf(items) || '주', ...rule }, { all: !isPool });
-      if (out.over) console.warn(`order-page print: ${out.over} items over the 10-page limit (${id})`);
+      const out = renderPrint(spec, { unit: unitOf(items) || '주', ...rule });
       if (req.method === 'HEAD') { res.setHeader('Content-Type', 'text/html; charset=utf-8'); return res.status(200).end(); }
       return send(res, 200, out.html, FRESH);
     }
