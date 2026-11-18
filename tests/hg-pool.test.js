@@ -203,7 +203,9 @@ test('interest survey input is validated and rate-limited', () => {
   assert.equal(surveyInput({ picks: Array.from({ length: 21 }, (_, i) => '수목' + i) }), null);
   assert.equal(surveyInput({ picks: ['목수국'], visitor: 'BAD!' }).visitor, '');
   let hit = false;
-  for (let i = 0; i < 11; i++) hit = limited('1.2.3.4', 1000 + i);
+  for (let i = 0; i < 30; i++) hit = limited('1.2.3.4', 1000 + i);
+  assert.equal(hit, false);
+  hit = limited('1.2.3.4', 1031);
   assert.equal(hit, true);
   assert.equal(limited('5.6.7.8', 1000), false);
 });
@@ -358,4 +360,21 @@ test('sold out (stock 0) keeps the card blurred with 품절; a sold-out size row
   const template = fs.readFileSync(require('path').join(__dirname, '../tools/order-proposal/template.html'), 'utf8');
   assert.match(template, /\.card\.soldout>:not\(\.c-sold\)\{filter:blur\(2px\) brightness\(\.72\)/);
   assert.match(template, /if \(c\.classList\.contains\('soldout'\)\) return;/);
+});
+
+test('interest survey also takes card hearts (empty list allowed to record clearing)', () => {
+  const { surveyInput } = require('../api/order-page');
+  const r = surveyInput({ picks: [], hearts: [{ k: 'recAAAAAAAAAAAAAA', n: "목수국 '다루마'" }, { k: 'recAAAAAAAAAAAAAA', n: 'dup' }, { k: '', n: 'x' }, { k: 'n:<b>x</b>', n: '<i>' }], visitor: 'abc123def456' });
+  assert.deepEqual(r.picks, []);
+  assert.deepEqual(r.hearts, [{ k: 'recAAAAAAAAAAAAAA', n: "목수국 '다루마'" }, { k: 'n:bx/b', n: 'i' }]);
+  assert.deepEqual(surveyInput({ hearts: [] }).hearts, []);
+  assert.equal(surveyInput({ picks: [] }), null);
+  assert.equal(surveyInput({ hearts: Array.from({ length: 201 }, (_, i) => ({ k: 'k' + i, n: 'n' })) }), null);
+  assert.equal(surveyInput({ picks: ['목수국'] }).hearts, undefined);
+});
+
+test('order cards carry a stable heart key', () => {
+  const { renderSections } = require('../lib/order-page');
+  const html = renderSections({ items: [{ k: 'h1', key: 'recBBBBBBBBBBBBBB', grp: '관목', genus: 'Hydrangea pan', name: "목수국 '다루마'", latin: 'Hydrangea', unit: '주', step: 40, rows: [['P9', 500, 3000, 0]] }] }).sections;
+  assert.match(html, /data-hk="recBBBBBBBBBBBBBB"/);
 });

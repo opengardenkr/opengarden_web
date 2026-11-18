@@ -100,30 +100,42 @@ function toGroups(raw) {
 
 // ── 관심 수목 조사: 손님이 주문서 첫 화면에서 고른 수목(POST /o/<링크ID>) ─────────────
 // 한 번 고를 때(바꾸면 또) 한 줄. IP·연락처는 저장하지 않는다 — 방문자는 브라우저가 만든 무작위 번호.
+// 카드 ♡(관심 품종, 2026-11-17)도 같은 줄에 담는다 — 보낼 때마다 그 방문자의 지금 목록 전체.
 const SURVEY = 'tblekVLA2t0MBlKds'; // [영업] 관심 수목 조사
 const SV = {
   title: 'fldWggb3xGpcs0TVi', picks: 'fldk28X2Zx3rEuM0H', n: 'fldEokM2g2l0KS5Vs', link: 'fld68wFWK7iAKnLmp',
   name: 'fldf1toLEj9KLqbX3', device: 'fldISJ6fhiDcdWhk6', visitor: 'fldqfI9586GexsEuL', at: 'fldg46sBQovryJLls',
+  hearts: 'fldJpYhRSGBQsLLBo', heartKeys: 'fldglNNvLy1tK72ZA', heartN: 'fldh4rVJ2lMkQJ3yt',
 };
 const LABEL_RE = /^[가-힣A-Za-z0-9 ·'().-]{1,30}$/;
+const clean = (s, max) => (typeof s === 'string' ? s.replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, max) : '');
 
-/** 조사 본문 검사 → { picks, visitor } 또는 null */
+/**
+ * 조사 본문 검사 → { picks, hearts, visitor } 또는 null.
+ * hearts가 배열로 오면(비어 있어도) 받는다 — ♡를 모두 지운 것도 한 줄로 남겨 지금 목록이 비었음을 안다.
+ */
 function surveyInput(body) {
   const b = body && typeof body === 'object' ? body : {};
   const picks = [...new Set((Array.isArray(b.picks) ? b.picks : []).map((x) => (typeof x === 'string' ? x.trim() : '')))];
-  if (!picks.length || picks.length > 20 || !picks.every((x) => LABEL_RE.test(x))) return null;
+  if (picks.length > 20 || !picks.every((x) => LABEL_RE.test(x))) return null;
+  const hasHearts = Array.isArray(b.hearts);
+  if (hasHearts && b.hearts.length > 200) return null;
+  const seen = new Set();
+  const hearts = (hasHearts ? b.hearts : []).map((h) => ({ k: clean(h && h.k, 120), n: clean(h && h.n, 80) }))
+    .filter((h) => h.k && h.n && !seen.has(h.k) && seen.add(h.k));
+  if (!picks.length && !hasHearts) return null;
   const visitor = typeof b.visitor === 'string' && /^[a-z0-9]{8,24}$/.test(b.visitor) ? b.visitor : '';
-  return { picks, visitor };
+  return hasHearts ? { picks, hearts, visitor } : { picks, visitor };
 }
 
-// 같은 인스턴스에서 IP당 10분에 10번까지(장난 막기). IP는 메모리에만 잠깐 두고 저장하지 않는다.
+// 같은 인스턴스에서 IP당 10분에 30번까지(장난 막기, ♡는 몇 초 모아 보낸다). IP는 메모리에만 잠깐 두고 저장하지 않는다.
 const hits = new Map();
 function limited(ip, now = Date.now()) {
   const list = (hits.get(ip) || []).filter((t) => now - t < 600000);
   list.push(now);
   hits.set(ip, list);
   if (hits.size > 5000) hits.clear();
-  return list.length > 10;
+  return list.length > 30;
 }
 
 async function recordSurvey(req, res, id) {
@@ -137,11 +149,15 @@ async function recordSurvey(req, res, id) {
     const f = await readLink(id);
     if (!f || statusOf(f) === '마감') return res.status(404).json({ error: 'link' });
     const ua = String(req.headers['user-agent'] || '');
+    const hs = input.hearts || [];
+    const title = [...input.picks, ...hs.map((h) => '♥' + h.n)].join(' · ').slice(0, 200) || '(관심 비움)';
     const fields = {
-      [SV.title]: input.picks.join(' · ').slice(0, 200), [SV.picks]: input.picks, [SV.n]: input.picks.length, [SV.link]: id,
+      [SV.title]: title, [SV.n]: input.picks.length, [SV.link]: id,
       [SV.name]: String(f[F.title] || '').slice(0, 80), [SV.device]: /Mobi|Android|iPhone|iPad/i.test(ua) ? '폰' : 'PC',
       [SV.visitor]: input.visitor, [SV.at]: new Date().toISOString(),
     };
+    if (input.picks.length) fields[SV.picks] = input.picks;
+    if (input.hearts) Object.assign(fields, { [SV.hearts]: hs.map((h) => h.n).join('\n'), [SV.heartKeys]: hs.map((h) => h.k).join('\n'), [SV.heartN]: hs.length });
     const post = (flds) => fetch(`https://api.airtable.com/v0/${BASE}/${SURVEY}`, {
       method: 'POST', headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ records: [{ fields: flds }], typecast: true }), signal: AbortSignal.timeout(10000),
