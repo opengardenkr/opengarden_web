@@ -16,7 +16,8 @@ test('print: every in-stock variety except 종이 제외 — no page cap', () =>
   const out = renderPrint({ title: '공동주문', basis: '2026년 11월 재고 기준', items: many }, { minEach: 200, step: 40, minTotal: 600 });
   assert.equal(out.count, 470);
   assert.equal((out.html.match(/<div class="card" /g) || []).length, 470);
-  assert.match(out.html, /id="mAll"[^>]*>전체 <span id="nAll">470<\/span>/);
+  assert.match(out.html, /data-m="all" aria-pressed="true">전체 <span>470<\/span>/);
+  assert.match(out.html, /data-t="관목"/); // 주문서 묶음 단추(수국·매자나무…)로 고르는 열쇠
   assert.match(out.html, /♥ 관심/);
   assert.match(out.html, /og-heart/);
 });
