@@ -44,8 +44,8 @@ http.createServer(async (req, res) => {
   const plant=url.pathname.match(/^\/plants\/(immediate|preorder)\/(rec[A-Za-z0-9]{14})$/);
   if(plant){url.pathname='/api/plant';url.searchParams.set('group',plant[1]);url.searchParams.set('id',plant[2]);}
   if(url.pathname==='/sitemap-plants.xml')url.pathname='/api/plant-sitemap';
-  const order=url.pathname.match(/^\/o\/([A-Za-z0-9_-]{22})$/);
-  if(order){url.pathname='/api/order-page';url.searchParams.set('id',order[1]);}
+  const order=url.pathname.match(/^\/o\/([A-Za-z0-9_-]{22})(\/print)?$/);
+  if(order){url.pathname='/api/order-page';url.searchParams.set('id',order[1]);if(order[2])url.searchParams.set('print','1');}
   const qk=url.pathname.match(/^\/q\/([A-Za-z0-9_-]{22})$/);
   if(qk){url.pathname='/api/quote-view';url.searchParams.set('key',qk[1]);}
 

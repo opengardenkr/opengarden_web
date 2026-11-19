@@ -22,7 +22,7 @@ async function readImage(response) {
 }
 // One proportional mark for all source aspect ratios; never write back to attachments.
 const WATERMARK = Object.freeze({ widthRatio: .24, marginRatio: .035, opacity: .30 });
-async function watermark(input, maxSize = 1600, quality = 84) {
+async function watermark(input, maxSize = 1600, quality = 84, format = 'webp') {
   const photo = await sharp(input, { limitInputPixels: 40000000 }).rotate()
     .resize({ width: maxSize, height: maxSize, fit: 'inside', withoutEnlargement: true })
     .flatten({ background: '#f4f6f1' }).jpeg({ quality: 90 }).toBuffer({ resolveWithObject: true });
@@ -35,7 +35,7 @@ async function watermark(input, maxSize = 1600, quality = 84) {
   return sharp(photo.data).composite([{
     input: logo.data, raw: { width: logo.info.width, height: logo.info.height, channels: 4 },
     left: Math.max(0, width - margin - logo.info.width), top: Math.max(0, height - margin - logo.info.height)
-  }]).webp({ quality }).toBuffer();
+  }]).toFormat(format === 'jpeg' ? 'jpeg' : 'webp', { quality }).toBuffer();
 }
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).end();
@@ -57,10 +57,10 @@ module.exports = async (req, res) => {
 module.exports.allowedImage = allowedImage;
 module.exports.watermark = watermark;
 // 외부 저작물(CC 사진)용: 로고 없이 크기만 줄인다
-async function resize(input, maxSize = 1600, quality = 84) {
+async function resize(input, maxSize = 1600, quality = 84, format = 'webp') {
   return sharp(input, { limitInputPixels: 40000000 }).rotate()
     .resize({ width: maxSize, height: maxSize, fit: 'inside', withoutEnlargement: true })
-    .flatten({ background: '#f4f6f1' }).webp({ quality }).toBuffer();
+    .flatten({ background: '#f4f6f1' }).toFormat(format === 'jpeg' ? 'jpeg' : 'webp', { quality }).toBuffer();
 }
 module.exports.resize = resize;
 module.exports.readImage = readImage;

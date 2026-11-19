@@ -7,6 +7,7 @@
 const { renderSections, renderPage, esc, unitOf } = require('../lib/order-page');
 const { GROUPS } = require('../lib/catalog-data');
 const pool = require('../lib/hg-pool');
+const { renderPrint } = require('../lib/print-page');
 
 const { F, ID_RE, readLink, statusOf } = require('../lib/order-link');
 
@@ -203,6 +204,12 @@ module.exports = async (req, res) => {
       groups: isPool ? pool.GROUPS : toGroups(f[F.items]),
       items,
     };
+    // 종이 주문서(GET /o/<ID>/print): 재고 있는 품종 전부('종이 제외' 빼고). 인쇄 화면에서 전체 / ♥ 관심을 고른다
+    if (req.query.print === '1') {
+      const out = renderPrint(spec, { unit: unitOf(items) || '주', ...rule });
+      if (req.method === 'HEAD') { res.setHeader('Content-Type', 'text/html; charset=utf-8'); return res.status(200).end(); }
+      return send(res, 200, out.html, FRESH);
+    }
     const { nav, sections, guide } = renderSections(spec);
     const bold = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
     const terms = String(f[F.memo] || '').split('\n').map((t) => t.trim()).filter(Boolean).slice(0, 12).map(bold);
@@ -211,7 +218,7 @@ module.exports = async (req, res) => {
       word: '주문', unit: unitOf(items), nav, pageUrl, meta: spec.basis,
       ogImage: `${SITE}/assets/${isPool ? 'og-pool.jpg' : 'og-order.jpg'}`, ogDim: true, // 카톡 미리보기: 공동수입은 농장 사진
       secure: sections, terms,
-      cfg: { pid: id, title: spec.title, date: spec.date, min, minLabel: min ? minLabel(min) : '', customer, ...rule, search: items.length > 30, compact: isPool, guide },
+      cfg: { pid: id, title: spec.title, date: spec.date, min, minLabel: min ? minLabel(min) : '', customer, ...rule, search: items.length > 30, compact: isPool, guide, print: `/o/${id}/print` },
     });
     if (req.method === 'HEAD') { res.setHeader('Content-Type', 'text/html; charset=utf-8'); return res.status(200).end(); }
     return send(res, 200, html, FRESH);
